@@ -68,7 +68,9 @@ function serve() {
   await page.waitForTimeout(500);
   // Only visible images: the other theme's screenshots are display:none, and browsers never load those.
   const brokenImgs = () => page.evaluate(() => [...document.images].filter((i) => i.offsetParent !== null && (!i.complete || i.naturalWidth === 0)).map((i) => i.getAttribute("src")));
-  const broken = await brokenImgs();
+  // Lazy images take longer over a real network, so poll instead of a fixed wait.
+  const settled = async () => { let b = await brokenImgs(); for (let i = 0; b.length && i < 40; i++) { await page.waitForTimeout(250); b = await brokenImgs(); } return b; };
+  const broken = await settled();
   check(broken.length === 0, `landing: every visible image loads${broken.length ? " (broken: " + broken.join(", ") + ")" : ""}`);
   // theme toggle flips and persists
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -80,7 +82,7 @@ function serve() {
   await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 700) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } });
   await page.waitForTimeout(500);
   check(await page.locator(".for-dark").first().isVisible() && await page.locator(".for-light").first().isHidden(), "landing: dark mode swaps in the dark screenshots");
-  const brokenDark = await brokenImgs();
+  const brokenDark = await settled();
   check(brokenDark.length === 0, `landing: dark screenshots load${brokenDark.length ? " (broken: " + brokenDark.join(", ") + ")" : ""}`);
   await page.evaluate(() => window.scrollTo(0, 0));
   await shot(page, "site-landing-dark");
