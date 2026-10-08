@@ -1,4 +1,4 @@
-.PHONY: build test fmt vet check serve compile-fixtures clean e2e shots demo
+.PHONY: build test fmt vet check serve compile-fixtures clean e2e shots demo site site-check
 
 build:
 	go build -o bin/kavira ./cmd/kavira
@@ -37,3 +37,10 @@ shots: build
 
 demo: build
 	node scripts/demo.cjs
+
+# The Pages site: landing + live demo (the real console on recorded API responses), assembled in _site/.
+site:
+	./scripts/build-site.sh
+
+site-check: site
+	node scripts/site-check.cjs

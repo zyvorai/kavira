@@ -3,7 +3,7 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", "docs/ux/**", "docs/social/**", "scripts/build-site.sh", "internal/api/static/favicon.svg", ".github/workflows/pages.yml"]
+    paths: ["site/**", "docs/ux/**", "docs/social/**", "internal/**", "cmd/**", "examples/**", "go.mod", "scripts/build-site.sh", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -23,6 +23,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+      # The live demo is the real console on API responses recorded from the real binary, so Go is needed.
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.23"
       - run: ./scripts/build-site.sh
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5

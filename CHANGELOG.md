@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Site and live demo on GitHub Pages** (`https://zyvorai.github.io/kavira/`). A landing page with an animated compile pipeline, a verdict explorer, theme-aware screenshots, and copy buttons; and `/demo/`, the *real* console running without a server on API responses that `scripts/build-site.sh` records from a throwaway local `kavira serve`, so the demo cannot drift from the API. `scripts/site-check.cjs` drives both under the real `/kavira/` sub-path in CI.
+- Console: toasts no longer stretch to the width of the longest message.
 - **Console rebuilt on the Zyvor UX contract.** Hash routes (`#/incidents/<id>/<tab>`) so every view is linkable and survives reload; real links with `aria-current`; a selected-incident chip; search, verdict filter, and sortable incident table; evidence now shows the captured bundle and measurements; experiments explain the verdict; repairs add Copy and download of `regression_test.json` or the whole package; a "Compile your own bundle" dialog; an audit view that verifies the hash chain; empty, loading, and error states everywhere; keyboard shortcuts (`g o/i/e/x/r/a`, `/`, `?`). A Playwright suite covers every route in light, dark, and 390px.
 - **Login redesigned.** No prefilled credentials, no password in the error text, distinct "wrong password", "server unreachable", and "session expired" messages. The demo-gate hint shows only while the gate is on.
 - **Theme.** Tokens shared with Netra, `prefers-color-scheme` honored, no flash of the wrong theme (`/theme.js` runs before first paint), proper focus rings, 44px targets, reduced motion.

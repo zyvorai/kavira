@@ -16,7 +16,7 @@
 
 **Execution is the verdict** · **Exact replay is not claimed** · **Local-first** · **Zero dependencies** · **Three incident classes**
 
-📖 **[Read the docs](https://zyvorai.github.io/kavira/)** · 🚀 **[Quickstart](#quickstart)** · 🔒 **[Security](SECURITY.md)**
+🎮 **[Live demo](https://zyvorai.github.io/kavira/demo/)** · 📖 **[Site](https://zyvorai.github.io/kavira/)** · 🚀 **[Quickstart](#quickstart)** · 🔒 **[Security](SECURITY.md)**
 
 </div>
 
@@ -30,6 +30,8 @@
 | The symptom does not reproduce | An honest `not_reproduced`. No repair package is invented |
 
 ## See it
+
+**[Try the live demo](https://zyvorai.github.io/kavira/demo/)**: the real console running in your browser on precompiled results (no server, nothing to install).
 
 ![KAVIRA console: compile an example, then walk evidence, experiments, and repairs](docs/ux/kavira-demo.gif)
 
