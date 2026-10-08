@@ -12,8 +12,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.23"
       # Same commands locally: make check
@@ -36,11 +36,11 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.23"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
       - run: go build -o bin/kavira ./cmd/kavira
@@ -52,7 +52,7 @@ jobs:
           npx playwright install --with-deps chromium
           echo "KAVIRA_PW_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
       - run: node scripts/e2e.cjs --shots "$RUNNER_TEMP/shots"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: console-screenshots
@@ -62,7 +62,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Same commands locally: docker build -t kavira . && docker run ...
       - run: docker build -t kavira:ci --build-arg VERSION=ci .
       - name: Container starts, turns healthy, and refuses anonymous API access
@@ -80,6 +80,6 @@ jobs:
   site:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Same command locally: ./scripts/build-site.sh   (fails on a broken local reference)
       - run: ./scripts/build-site.sh
