@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>What KAVIRA claims</title><link rel="stylesheet" href="card.css"></head><body><div class="wrap">
+<div class="top"><div class="mark">Z</div>KAVIRA · Honesty</div>
+<h1>Exact replay is <em>not claimed.</em></h1>
+<p class="lede">The v0 claim is narrow on purpose: an exportable reproducer and a regression test, for three incident classes.</p>
+<div class="grid g2">
+<div class="card ok"><span class="tag t-g">KAVIRA does</span><ul class="yes">
+<li>Reconstruct a captured condition in an isolated runner</li>
+<li>Change one factor and measure the difference</li>
+<li>Let execution, not the proposer, set the verdict</li>
+<li>Write a regression test only when the repair held</li>
+<li>Keep a hash-chained log of every compile</li></ul></div>
+<div class="card bad"><span class="tag t-r">KAVIRA does not</span><ul class="no">
+<li>Replay production instruction streams</li>
+<li>Sample network loss at random (it selects the first N percent)</li>
+<li>Approve or apply production changes</li>
+<li>Invent a repair when the symptom did not reproduce</li>
+<li>Treat a hypothesis as a finding</li></ul></div>
+</div>
+<p class="foot">Config work cost scales with batch_size. It is a bounded stand-in, not a benchmark.</p>
+</div><script>document.documentElement.dataset.h=document.querySelector('.wrap').offsetHeight</script></body></html>

@@ -1,0 +1,27 @@
+{
+  "id": "inc-net-001",
+  "class": "network_timeout",
+  "service": "inference",
+  "symptom": "Upstream dials time out after the migration cutover.",
+  "evidence": {
+    "p99_ms": 1800,
+    "deploy_change": "VM migration, network policy tightened",
+    "notes": [
+      "Delay and timeout are captured conditions, recreated on a local listener.",
+      "Loss is selected, not a random sample of production packets."
+    ]
+  },
+  "workload": {
+    "name": "inference-upstream",
+    "requests": 4,
+    "bytes_per_request": 1024,
+    "expected_max_p99_ms": 500
+  },
+  "network": {
+    "delay_ms": 40,
+    "loss_percent": 0,
+    "timeout_ms": 15,
+    "policy_deny": false,
+    "attempts": 4
+  }
+}

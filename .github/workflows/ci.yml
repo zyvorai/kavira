@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      # Same commands locally: make check
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build -o bin/kavira ./cmd/kavira
+      # Same command locally: ./scripts/check-version-sync.sh
+      - run: ./scripts/check-version-sync.sh
+      - name: Compile every example and run its regression test
+        run: |
+          for ex in oom network-timeout config-regression; do
+            ./bin/kavira compile -f examples/$ex.json -o /tmp/kavira-repairs
+          done
+          for t in /tmp/kavira-repairs/*/regression_test.json; do
+            ./bin/kavira test -f "$t"
+          done
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: go build -o bin/kavira ./cmd/kavira
+      # Same command locally: make e2e   (every route, light/dark/390px, XSS, auth, shortcuts)
+      - name: Install Playwright and Chromium
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw" && npm init -y >/dev/null
+          npm i playwright@1.49.1 >/dev/null
+          npx playwright install --with-deps chromium
+          echo "KAVIRA_PW_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+      - run: node scripts/e2e.cjs --shots "$RUNNER_TEMP/shots"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: console-screenshots
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: ignore
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Same commands locally: docker build -t kavira . && docker run ...
+      - run: docker build -t kavira:ci --build-arg VERSION=ci .
+      - name: Container starts, turns healthy, and refuses anonymous API access
+        run: |
+          docker run -d --name kavira -p 8080:8080 \
+            -e KAVIRA_ADMIN_PASSWORD=ci-only-password -e KAVIRA_SESSION_KEY=ci-only-key kavira:ci
+          for _ in $(seq 1 30); do
+            [ "$(docker inspect -f '{{.State.Health.Status}}' kavira)" = healthy ] && break
+            sleep 1
+          done
+          docker inspect -f '{{.State.Health.Status}}' kavira | grep -qx healthy || { docker logs kavira; exit 1; }
+          curl -fsS localhost:8080/api/v1/health | grep -q '"demo_gate": false'
+          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/api/v1/incidents)" = 401
+
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Same command locally: ./scripts/build-site.sh   (fails on a broken local reference)
+      - run: ./scripts/build-site.sh

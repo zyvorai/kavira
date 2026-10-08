@@ -1,0 +1,24 @@
+{
+  "id": "inc-oom-001",
+  "class": "container_oom",
+  "service": "inference",
+  "symptom": "Inference latency climbs and the container restarts after the VM migration.",
+  "evidence": {
+    "memory_limit_bytes": 3145728,
+    "observed_peak_bytes": 6291456,
+    "restart_count": 3,
+    "p99_ms": 2400,
+    "deploy_change": "VM migration, same image, memory limit unchanged",
+    "notes": [
+      "Limit is the captured cgroup value, not a trace.",
+      "Workload holds one buffer per request, matching the post-migration batch."
+    ]
+  },
+  "workload": {
+    "name": "inference-batch",
+    "requests": 6,
+    "bytes_per_request": 1048576,
+    "hold": true,
+    "expected_max_p99_ms": 2000
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "inc-cfg-001",
+  "class": "config_regression",
+  "service": "inference",
+  "symptom": "Same workload misses its latency bound after a config rollout.",
+  "evidence": {
+    "deploy_change": "config rollout during VM migration",
+    "notes": [
+      "Previous and current snapshots are run against the same bounded workload.",
+      "Work cost scales with batch_size. This is not an instruction replay."
+    ]
+  },
+  "workload": {
+    "name": "inference-config",
+    "requests": 1,
+    "bytes_per_request": 262144,
+    "expected_max_p99_ms": 40
+  },
+  "configs": {
+    "previous": {
+      "batch_size": "2",
+      "timeout_ms": "200",
+      "memory_limit_mib": "64"
+    },
+    "current": {
+      "batch_size": "16",
+      "timeout_ms": "10",
+      "memory_limit_mib": "8"
+    }
+  }
+}

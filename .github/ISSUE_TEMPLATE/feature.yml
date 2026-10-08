@@ -1,0 +1,11 @@
+name: Feature request
+description: Propose a change
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes: { label: The problem, description: "What outage or workflow is hard today?" }
+    validations: { required: true }
+  - type: textarea
+    id: idea
+    attributes: { label: Proposal, description: "Remember the boundaries: execution decides, no exact-replay claims, no new dependencies." }

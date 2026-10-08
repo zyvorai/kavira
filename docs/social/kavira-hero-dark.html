@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>KAVIRA hero</title>
+<style>
+:root{--bg:#0b0b0d;--panel:#161618;--line:rgba(255,255,255,.12);--text:#f5f5f7;--dim:#a1a1a6;--orange:#ff7a1a;--deep:#c2410c;--green:#30d158;--amber:#ffd60a;--red:#ff6961;--blue:#2997ff}
+*{box-sizing:border-box}html,body{margin:0}
+body{width:1200px;height:630px;overflow:hidden;position:relative;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif}
+.glow{position:absolute;inset:0;background:radial-gradient(760px 360px at 18% -6%,rgba(255,122,26,.30),transparent 70%),radial-gradient(620px 320px at 100% 110%,rgba(41,151,255,.16),transparent 70%)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;opacity:.18;mask-image:linear-gradient(180deg,#000,transparent 85%)}
+.wrap{position:absolute;left:64px;right:64px;top:48px;bottom:44px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:14px;font-size:22px;font-weight:650;letter-spacing:.16em}
+.mark{width:44px;height:44px;border-radius:11px;background:linear-gradient(180deg,var(--orange),var(--deep));display:grid;place-items:center;font-size:26px;font-weight:700;letter-spacing:0}
+.brand small{margin-left:auto;font-size:16px;letter-spacing:.14em;color:var(--dim);font-weight:500;text-transform:uppercase}
+h1{margin:30px 0 0;font-size:76px;line-height:1.02;letter-spacing:-.035em;font-weight:700;max-width:980px}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--orange),#ffb36b);-webkit-background-clip:text;color:transparent}
+p.sub{margin:20px 0 0;font-size:25px;line-height:1.35;color:var(--dim);max-width:900px}
+.flow{margin-top:auto;display:flex;align-items:stretch;gap:0}
+.step{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 18px}
+.step b{display:block;font-size:20px;letter-spacing:-.01em}.step span{display:block;margin-top:4px;font-size:15px;color:var(--dim)}
+.arrow{width:34px;display:grid;place-items:center;color:var(--orange);font-size:22px}
+.step.hit{border-color:rgba(48,209,88,.5);background:linear-gradient(180deg,rgba(48,209,88,.12),var(--panel))}
+.row{display:flex;gap:10px;margin-top:20px;align-items:center}
+.pill{font-size:15px;font-weight:650;padding:5px 13px;border-radius:99px;border:1px solid var(--line)}
+.g{color:var(--green);background:rgba(48,209,88,.14)}.a{color:var(--amber);background:rgba(255,214,10,.12)}.r{color:var(--red);background:rgba(255,105,97,.14)}.d{color:var(--dim);background:rgba(255,255,255,.06)}
+.row .spacer{margin-left:auto;font-size:16px;color:var(--dim);letter-spacing:.02em}
+</style></head><body>
+<div class="glow"></div><div class="grid"></div>
+<div class="wrap">
+  <div class="brand"><div class="mark">Z</div>KAVIRA<small>Incident compiler · Zyvor</small></div>
+  <h1>Turn an outage into a <em>reproducible test.</em></h1>
+  <p class="sub">Compile captured evidence into an isolated reproducer, one-factor experiments, and a repair package. Execution is the verdict.</p>
+  <div class="flow">
+    <div class="step"><b>Evidence</b><span>captured, not replayed</span></div><div class="arrow">→</div>
+    <div class="step"><b>Hypotheses</b><span>proposed, never authoritative</span></div><div class="arrow">→</div>
+    <div class="step"><b>Experiment</b><span>change one factor</span></div><div class="arrow">→</div>
+    <div class="step hit"><b>Repair package</b><span>patch + regression test</span></div>
+  </div>
+  <div class="row"><span class="pill g">Repair held</span><span class="pill a">Not reproduced</span><span class="pill r">Repair failed</span><span class="pill d">Unsupported</span>
+    <span class="spacer">Apache-2.0 · Local-first · Exact replay is not claimed</span></div>
+</div>
+</body></html>

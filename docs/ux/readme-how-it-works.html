@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>How a compile works</title><link rel="stylesheet" href="card.css"></head><body><div class="wrap">
+<div class="top"><div class="mark">Z</div>KAVIRA · How a compile works</div>
+<h1>Six steps. <em>Execution</em> decides.</h1>
+<p class="lede">The proposer lists competing explanations. The runner decides whether the failure reproduces and whether the repair holds. If the symptom does not reproduce, KAVIRA stops.</p>
+<div class="grid g3">
+<div class="card"><div class="n">01</div><h3>Read evidence</h3><p>An evidence bundle: captured limit, peak, restarts, latency, deploy change.</p></div>
+<div class="card"><div class="n">02</div><h3>Propose</h3><p>Competing explanations. None of them is authoritative.</p></div>
+<div class="card"><div class="n">03</div><h3>Run the original</h3><p>An isolated, bounded reconstruction of the captured condition.</p></div>
+<div class="card warn"><div class="n">04</div><h3>Stop if it does not reproduce</h3><p>No repair package. There is nothing to repair yet.</p></div>
+<div class="card"><div class="n">05</div><h3>Change one factor</h3><p>Run the repair arm. Same workload, one difference.</p></div>
+<div class="card hit"><div class="n">06</div><h3>Write the package</h3><p>Patch, regression test, measurements, and reproduction steps, only if the repair held.</p></div>
+</div>
+<div class="grid g4" style="margin-top:22px">
+<div class="card ok"><span class="tag t-g">repair_held</span><p>Reproduced, then the repair held.</p></div>
+<div class="card warn"><span class="tag t-a">not_reproduced</span><p>The symptom did not reproduce.</p></div>
+<div class="card bad"><span class="tag t-r">repair_failed</span><p>Reproduced, but the repair did not hold.</p></div>
+<div class="card"><span class="tag t-d">unsupported</span><p>Outside the three v0 classes.</p></div>
+</div>
+</div><script>document.documentElement.dataset.h=document.querySelector('.wrap').offsetHeight</script></body></html>

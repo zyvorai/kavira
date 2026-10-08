@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#000000" />
+  <title>KAVIRA · Turn an outage into a reproducible test</title>
+  <meta name="description" content="KAVIRA compiles captured incident evidence into an isolated reproducer, one-factor experiments, and a repair package. Execution is the verdict." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="canonical" href="https://zyvorai.github.io/kavira/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="KAVIRA" />
+  <meta property="og:title" content="KAVIRA · Turn an outage into a reproducible test" />
+  <meta property="og:description" content="Evidence in. Isolated reproducer, one-factor experiments, and a repair package out. Execution is the verdict." />
+  <meta property="og:url" content="https://zyvorai.github.io/kavira/" />
+  <meta property="og:image" content="https://zyvorai.github.io/kavira/social/kavira-hero-dark.jpg" />
+  <meta property="og:image:width" content="2400" />
+  <meta property="og:image:height" content="1260" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://zyvorai.github.io/kavira/social/kavira-hero-dark.jpg" />
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="bar">
+  <a class="brand" href="./"><span class="mark" aria-hidden="true">Z</span><b>KAVIRA</b></a>
+  <nav aria-label="Site">
+    <a href="#how">How it works</a><a href="#classes">Classes</a><a href="#console">Console</a><a href="#quickstart">Quickstart</a>
+    <a class="btn small" href="https://github.com/zyvorai/kavira">GitHub</a>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <p class="kicker">Zyvor · incident compiler</p>
+    <h1>Turn an outage into a <em>reproducible test.</em></h1>
+    <p class="lede">KAVIRA compiles captured production evidence into an isolated reproducer, one-factor experiments, and a repair package. The proposer lists explanations. <strong>Execution decides.</strong></p>
+    <p class="cta"><a class="btn primary" href="#quickstart">Get started</a><a class="link" href="https://github.com/zyvorai/kavira">View on GitHub</a></p>
+    <figure class="demo"><img src="ux/kavira-demo.gif" alt="KAVIRA console: sign in, compile an example, then read evidence, experiments, and the repair package" width="960" height="540" />
+      <figcaption>Recorded against a real <code>kavira serve</code>, not a mockup.</figcaption></figure>
+  </section>
+
+  <section class="band" aria-label="Promises">
+    <div><b>Execution is the verdict</b><span>A hypothesis is never a finding.</span></div>
+    <div><b>Exact replay is not claimed</b><span>Conditions are reconstructed, not replayed.</span></div>
+    <div><b>Local-first</b><span>One static binary. No cloud, no agents.</span></div>
+    <div><b>Zero dependencies</b><span>Go standard library only.</span></div>
+  </section>
+
+  <section id="how">
+    <h2>One factor at a time</h2>
+    <p class="sub">If the symptom does not reproduce, KAVIRA stops and says so. A repair package exists only when the repair held.</p>
+    <img class="card-img" src="ux/readme-how-it-works.jpg" alt="Six steps: read evidence, propose, run the original, stop if it does not reproduce, change one factor, write the package. Verdicts: repair_held, not_reproduced, repair_failed, unsupported." loading="lazy" />
+  </section>
+
+  <section id="classes">
+    <h2>Three incident classes in v0</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Incident</th><th>Experiment</th><th>Repair check</th></tr></thead>
+      <tbody>
+        <tr><td>Container OOM</td><td>Bounded workload under the captured memory limit</td><td>Failures, memory, latency bound</td></tr>
+        <tr><td>Network timeout</td><td>Selected delay, loss, or policy on a local listener</td><td>Recovery and connectivity</td></tr>
+        <tr><td>Configuration regression</td><td>Previous and current configs, same workload</td><td>Behavior diff and a regression test</td></tr>
+      </tbody></table></div>
+  </section>
+
+  <section id="console">
+    <h2>A console that shows its work</h2>
+    <p class="sub">Evidence, every experiment arm, and the repair package, with copy and download. Light, dark, and 390px.</p>
+    <div class="shots">
+      <img src="ux/02-evidence-light.png" alt="Evidence page in light mode" loading="lazy" />
+      <img src="ux/03-experiments-dark.png" alt="Experiments page in dark mode" loading="lazy" />
+      <img src="ux/04-repairs-light.png" alt="Repairs page with patch, regression test, and reproduce steps" loading="lazy" />
+    </div>
+  </section>
+
+  <section id="quickstart">
+    <h2>Quickstart</h2>
+<pre><code>git clone https://github.com/zyvorai/kavira.git &amp;&amp; cd kavira
+make check
+./bin/kavira compile -f examples/oom.json -o repairs
+./bin/kavira test -f repairs/inc-oom-001/regression_test.json
+./bin/kavira serve        # http://127.0.0.1:8080</code></pre>
+    <p class="sub">The demo gate (<code>admin</code> / <code>Admin@321</code>) exists only until you set <code>KAVIRA_ADMIN_PASSWORD</code>. Set it, and <code>KAVIRA_SESSION_KEY</code>, before exposing the console.</p>
+  </section>
+
+  <section id="honesty">
+    <h2>What it does not claim</h2>
+    <img class="card-img" src="ux/readme-honesty.jpg" alt="KAVIRA reconstructs conditions, measures one factor, and lets execution decide. It does not replay production, sample loss at random, approve production changes, or invent a repair." loading="lazy" />
+  </section>
+</main>
+
+<footer>
+  <p><b>KAVIRA</b> by Zyvor AI Labs · Apache-2.0 · <a href="https://github.com/zyvorai/kavira">GitHub</a> · <a href="https://github.com/zyvorai/kavira/blob/main/SECURITY.md">Security</a> · <a href="https://github.com/zyvorai/kavira/blob/main/CHANGELOG.md">Changelog</a></p>
+  <p>Neighbors: <a href="https://github.com/zyvorai/zyntra">Zyntra</a> · <a href="https://github.com/zyvorai/verixa">Verixa</a> · <a href="https://github.com/zyvorai/kubeflight">KubeFlight</a></p>
+</footer>
+</body>
+</html>
