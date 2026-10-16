@@ -190,6 +190,10 @@ See [deploy/README.md](deploy/README.md) for the release image, `docker compose`
 | State | In memory. A restart clears incidents and the audit log |
 | Model-proposed hypotheses | Not in v0. Proposals are rules over the bundle |
 
+## Support
+
+Free under Apache-2.0. If it helps you, you can donate any amount you like: <https://rzp.io/rzp/utwdYh3>. A donation is voluntary and supports development and maintenance. It is not a purchase: it buys no support, SLA, features, priority or license, and it is not tax-deductible (Zyvor AI Labs Private Limited is a company, not a charity). Support contracts are separate: sales@zyvor.dev.
+
 ## License
 
 [Apache-2.0](LICENSE). Copyright 2026 Zyvor AI Labs.
