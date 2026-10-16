@@ -40,7 +40,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: "1.23"
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - run: go build -o bin/kavira ./cmd/kavira
@@ -52,7 +52,7 @@ jobs:
           npx playwright install --with-deps chromium
           echo "KAVIRA_PW_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
       - run: node scripts/e2e.cjs --shots "$RUNNER_TEMP/shots"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: console-screenshots
@@ -84,7 +84,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: "1.23"
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       # Same commands locally: make site-check   (builds the real binary, records the API, assembles _site/)
@@ -97,7 +97,7 @@ jobs:
           echo "KAVIRA_PW_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
       # Serves _site under /kavira/ like Pages does, then drives the landing page and the live demo.
       - run: node scripts/site-check.cjs --shots "$RUNNER_TEMP/site-shots"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: site-screenshots
