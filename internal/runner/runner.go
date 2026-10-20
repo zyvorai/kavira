@@ -6,6 +6,7 @@ import (
 	"net"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/zyvorai/kavira/internal/bundle"
@@ -79,7 +80,8 @@ func RunNetwork(n bundle.NetworkCondition) Result {
 	if err != nil {
 		return Result{Attempts: attempts, Failures: attempts, Detail: err.Error()}
 	}
-	defer ln.Close()
+	closeOnce := sync.OnceFunc(func() { _ = ln.Close() })
+	defer closeOnce()
 
 	done := make(chan struct{})
 	go func() {
@@ -114,6 +116,8 @@ func RunNetwork(n bundle.NetworkCondition) Result {
 			failures++
 		}
 	}
+	// Close first: if any dial failed, the accept loop would otherwise wait forever.
+	closeOnce()
 	<-done
 	p99 := percentile(samples, 99)
 	return Result{
@@ -139,12 +143,21 @@ func handle(conn net.Conn, n bundle.NetworkCondition, i int) {
 	_, _ = conn.Write([]byte("ok"))
 }
 
+// maxConfigBatch bounds the allocation (batch*256KiB) and sleep (batch*2ms) in RunConfig.
+const maxConfigBatch = 4096
+
 func RunConfig(cfg map[string]string) Result {
 	batch := atoi(cfg["batch_size"], 1)
 	timeoutMs := atoi(cfg["timeout_ms"], 1000)
 	memMiB := atoi(cfg["memory_limit_mib"], 64)
 	limit := int64(memMiB) * 1024 * 1024
 	need := int64(batch) * 256 * 1024
+	if batch < 1 || memMiB < 1 || batch > maxConfigBatch {
+		return Result{
+			Failures: 1, Attempts: 1, LimitBytes: limit,
+			Detail: fmt.Sprintf("invalid config: batch=%d (1..%d) mem=%dMiB (>=1)", batch, maxConfigBatch, memMiB),
+		}
+	}
 	start := time.Now()
 	if need > limit {
 		return Result{
