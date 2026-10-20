@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/zyvorai/kavira/internal/bundle"
@@ -289,6 +290,9 @@ func WritePackage(dir string, b bundle.Bundle, rep Report) error {
 	if rep.Repair == nil {
 		return fmt.Errorf("no repair package for %s (%s)", rep.ID, rep.Verdict)
 	}
+	if rep.ID == "." || rep.ID == ".." || rep.ID != filepath.Base(rep.ID) || strings.ContainsAny(rep.ID, `/\`) {
+		return fmt.Errorf("bundle id %q is not a safe directory name", rep.ID)
+	}
 	dest := filepath.Join(dir, rep.ID)
 	if err := os.MkdirAll(dest, 0o755); err != nil {
 		return err
@@ -380,8 +384,9 @@ func asInt64(v any) int64 {
 }
 
 func asInt(v any) (int, bool) {
-	if v == nil {
-		return 0, false
+	switch v.(type) {
+	case float64, int, int64, json.Number:
+		return int(asInt64(v)), true
 	}
-	return int(asInt64(v)), true
+	return 0, false
 }
