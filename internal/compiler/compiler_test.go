@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -69,5 +70,38 @@ func TestNotReproduced(t *testing.T) {
 	}
 	if rep.Repair != nil {
 		t.Fatal("did not want a repair package")
+	}
+}
+
+func TestWritePackageRejectsUnsafeID(t *testing.T) {
+	b := load(t, "oom.json")
+	rep := Compile(b)
+	if rep.Repair == nil {
+		t.Fatal("missing repair package")
+	}
+	root := t.TempDir()
+	for _, id := range []string{"../escape", "a/b", "..", ".", `a\b`} {
+		rep.ID = id
+		if err := WritePackage(filepath.Join(root, "out"), b, rep); err == nil {
+			t.Fatalf("id %q accepted", id)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(root, "escape")); err == nil {
+		t.Fatal("wrote outside output dir")
+	}
+	rep.ID = "ok-1"
+	if err := WritePackage(filepath.Join(root, "out"), b, rep); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAsIntRejectsNonNumeric(t *testing.T) {
+	for _, v := range []any{nil, "500", true} {
+		if _, ok := asInt(v); ok {
+			t.Fatalf("asInt(%v) accepted", v)
+		}
+	}
+	if n, ok := asInt(float64(7)); !ok || n != 7 {
+		t.Fatalf("got %d %v", n, ok)
 	}
 }
