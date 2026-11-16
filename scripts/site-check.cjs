@@ -138,10 +138,10 @@ function serve() {
   await page.waitForSelector("#app:not([hidden])");
   check(await page.locator("#login").isHidden(), "demo: opens signed in, no login form");
   check((await page.locator(".demo-banner").innerText()).includes("Static demo"), "demo: banner says it is static");
-  check(await page.locator(".metric-band b").first().innerText() === "3", "demo: overview shows the 3 precompiled incidents");
+  check(await page.locator(".metric-band b").first().innerText() === "4", "demo: overview shows the 4 precompiled incidents");
   await page.click('nav a[data-nav="incidents"]');
   await page.waitForSelector("#inc-table tbody tr");
-  check(await page.locator("#inc-table tbody tr").count() === 3, "demo: incidents table has 3 rows");
+  check(await page.locator("#inc-table tbody tr").count() === 4, "demo: incidents table has 4 rows");
   await page.locator("#inc-table tbody tr td a", { hasText: "inc-oom-001" }).click();
   await page.waitForSelector(".kv");
   check((await page.locator("#page-title").innerText()).includes("inc-oom-001"), "demo: incident opens on Evidence");
