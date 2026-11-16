@@ -105,7 +105,7 @@
 <span class="bad">verdict repair_failed: no package written</span></code></pre>
       </div>
       <div role="tabpanel" id="p-unsup" aria-labelledby="t-unsup" class="panel" hidden>
-        <div><h3>Outside the three v0 classes</h3><p>Container OOM, network timeout, and configuration regression are supported. Anything else is reported as unsupported rather than approximated.</p>
+        <div><h3>Outside the supported classes</h3><p>Container OOM, network timeout, configuration regression, and disk pressure are supported. Anything else is reported as unsupported rather than approximated.</p>
           <p class="writes"><b>Writes</b> nothing, and says why.</p></div>
 <pre><code><span class="p">$</span> kavira compile -f incident.json -o repairs
 <span class="dim">verdict unsupported: no package written</span></code></pre>
@@ -114,13 +114,14 @@
   </section>
 
   <section id="classes">
-    <h2>Three incident classes in v0</h2>
+    <h2>Four incident classes</h2>
     <div class="table-wrap"><table>
       <thead><tr><th scope="col">Incident</th><th scope="col">Experiment</th><th scope="col">Repair check</th></tr></thead>
       <tbody>
         <tr><th scope="row">Container OOM</th><td>Bounded workload under the captured memory limit</td><td>Failures, memory, latency bound</td></tr>
         <tr><th scope="row">Network timeout</th><td>Selected delay, loss, or policy on a local listener</td><td>Recovery and connectivity</td></tr>
         <tr><th scope="row">Configuration regression</th><td>Previous and current configs, same workload</td><td>Behavior diff and a regression test</td></tr>
+        <tr><th scope="row">Disk pressure</th><td>Bounded write workload under the captured volume quota</td><td>Failures, written peak, latency bound</td></tr>
       </tbody></table></div>
   </section>
 

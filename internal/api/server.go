@@ -350,12 +350,34 @@ func (s *Server) incidents(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) incident(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/v1/incidents/")
+	wantZip := false
+	if strings.HasSuffix(id, "/package.zip") {
+		wantZip = true
+		id = strings.TrimSuffix(id, "/package.zip")
+	}
+	id = path.Base(id)
 	s.mu.Lock()
 	rep, ok := s.reports[id]
 	b := s.bundles[id]
 	s.mu.Unlock()
 	if !ok {
 		writeError(w, http.StatusNotFound, "incident not found")
+		return
+	}
+	if wantZip {
+		if r.Method != http.MethodGet {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		raw, err := compiler.PackageZIP(b, rep)
+		if err != nil {
+			writeError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.zip"`, id))
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(raw)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"incident": rep, "bundle": b})

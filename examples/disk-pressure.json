@@ -1,0 +1,24 @@
+{
+  "id": "inc-disk-001",
+  "class": "disk_pressure",
+  "service": "log-shipper",
+  "symptom": "Writes stall and the shipper restarts after a burst of verbose logging.",
+  "evidence": {
+    "disk_limit_bytes": 3145728,
+    "observed_used_bytes": 6291456,
+    "restart_count": 2,
+    "p99_ms": 1800,
+    "deploy_change": "log level raised to debug; volume quota unchanged",
+    "notes": [
+      "Limit is the captured volume quota, not a filesystem trace.",
+      "Workload retains one write buffer per request when hold is true, matching a shipper that does not rotate."
+    ]
+  },
+  "workload": {
+    "name": "shipper-burst",
+    "requests": 6,
+    "bytes_per_request": 1048576,
+    "hold": true,
+    "expected_max_p99_ms": 2000
+  }
+}

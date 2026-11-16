@@ -6,7 +6,7 @@ const EXPLAIN = {
   repair_held: "The original condition reproduced the symptom, and with one factor changed the repair arm held within the bound. A repair package was written.",
   repair_failed: "The symptom reproduced, but the repair arm did not hold. No repair package is written, because KAVIRA does not invent a repair that execution did not confirm.",
   not_reproduced: "The captured condition did not reproduce the symptom, so the run stopped. No repair package: there is nothing to repair yet.",
-  unsupported: "This incident class is outside the three v0 classes. KAVIRA reports that instead of guessing.",
+  unsupported: "This incident class is outside the supported set. KAVIRA reports that instead of guessing.",
 };
 
 export function overview(ctx) {

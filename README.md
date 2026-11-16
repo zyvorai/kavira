@@ -14,7 +14,7 @@
 
 **KAVIRA compiles captured production evidence into an isolated reproducer, one-factor experiments, and a repair package.** The proposer lists competing explanations. Execution decides whether the failure reproduces and whether the repair holds.
 
-**Execution is the verdict** · **Exact replay is not claimed** · **Local-first** · **Zero dependencies** · **Three incident classes**
+**Execution is the verdict** · **Exact replay is not claimed** · **Local-first** · **Zero dependencies** · **Four incident classes**
 
 🎮 **[Live demo](https://zyvorai.github.io/kavira/demo/)** · 📖 **[Site](https://zyvorai.github.io/kavira/)** · 🚀 **[Quickstart](#quickstart)** · 🔒 **[Security](SECURITY.md)**
 
@@ -47,21 +47,23 @@
 
 The console follows the Zyvor [UX contract](docs/design/UX-CONTRACT.md), shared with Netra: Apple light by default, dark one click away (or follows your OS), keyboard-first (`?` lists the shortcuts), and no horizontal scroll at 390px.
 
-## v0 classes
+## Supported classes
 
 | Incident | Experiment | Repair check |
 | --- | --- | --- |
 | Container OOM | Bounded workload under the captured memory limit | Failures, memory, latency bound |
 | Network timeout | Selected delay, loss, or policy on a local listener | Recovery and connectivity |
 | Configuration regression | Previous and current configs, same workload | Behavior diff and a regression test |
+| Disk pressure | Bounded write workload under the captured volume quota | Failures, written peak, latency bound |
 
 ## Quickstart
 
 ```bash
 git clone https://github.com/zyvorai/kavira.git && cd kavira
 make check                                  # gofmt, vet, race tests, build
-./bin/kavira compile -f examples/oom.json -o repairs
-./bin/kavira test -f repairs/inc-oom-001/regression_test.json
+./bin/kavira compile -d examples -o repairs # or -f examples/oom.json
+./bin/kavira test -d repairs --format junit
+./bin/kavira summarize -f repairs/inc-oom-001/verdict.json
 ./bin/kavira serve                          # http://127.0.0.1:8080
 ```
 
@@ -112,7 +114,7 @@ Verdicts: `not_reproduced`, `repair_failed`, `repair_held`, `unsupported`.
 
 | Page | What it shows |
 | --- | --- |
-| Overview | Metric band, the three examples (compile in one click), and "Compile your own bundle" (paste or upload JSON, 1 MiB max) |
+| Overview | Metric band, the seeded examples (compile in one click), and "Compile your own bundle" (paste or upload JSON, 1 MiB max) |
 | Incidents | Search, verdict filter, sortable table |
 | Evidence | Authority, captured evidence, competing explanations, measurements |
 | Experiments | Every arm: factor, change, result, failures, p99, detail, and why the verdict is what it is |
@@ -133,6 +135,7 @@ All `/api/v1` routes except `health` and `session` need the `kavira_session` coo
 | `POST /api/v1/logout` | Clear the cookie |
 | `GET /api/v1/incidents` | Compiled incidents, sorted by ID |
 | `GET /api/v1/incidents/{id}` | `{incident, bundle}` |
+| `GET /api/v1/incidents/{id}/package.zip` | Repair package zip (only when `repair_held`) |
 | `POST /api/v1/compile` | `{"fixture": "oom"}` or a raw evidence bundle (≤ 1 MiB) |
 | `GET /api/v1/fixtures` | Embedded examples with class and symptom |
 | `GET /api/v1/audit` | Hash-chained log and `chain_ok` |
@@ -147,7 +150,7 @@ All `/api/v1` routes except `health` and `session` need the `kavira_session` coo
 | [Verixa](https://github.com/zyvorai/verixa) | Rehearse simulated agent actions. KAVIRA runs the isolated workload. |
 | [KubeFlight](https://github.com/zyvorai/kubeflight) | Preflight a deploy. KAVIRA reconstructs a failure that already happened. |
 
-Overlap with incident investigation, deterministic replay, and recording debuggers is real. The v0 claim is the exportable reproducer plus the regression test, for these three classes only.
+Overlap with incident investigation, deterministic replay, and recording debuggers is real. The claim is the exportable reproducer plus the regression test, for the supported classes only.
 
 ## Honesty
 
@@ -184,7 +187,7 @@ See [deploy/README.md](deploy/README.md) for the release image, `docker compose`
 
 | Area | Status |
 | --- | --- |
-| Three v0 incident classes | Working, covered by tests and CI |
+| Four incident classes | Working, covered by tests and CI |
 | Console | Working. Browser end-to-end suite runs every route in light, dark, and 390px |
 | Auth | Single `admin` user, HMAC cookie. A demo gate, not an identity system |
 | State | In memory. A restart clears incidents and the audit log |

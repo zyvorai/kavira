@@ -71,6 +71,21 @@ func Propose(b bundle.Bundle) []Hypothesis {
 			Evidence:    []string{"previous config snapshot", "current config snapshot"},
 			Experiment:  "Run previous and current configurations against the same bounded workload.",
 		})
+	case bundle.ClassDisk:
+		add(Hypothesis{
+			ID:   "disk_quota",
+			Name: "Disk quota exhaustion",
+			Explanation: fmt.Sprintf(
+				"Captured used %d bytes against volume limit %d, with %d restarts. A bounded write workload under that quota should fail the same way if the quota is the cause.",
+				b.Evidence.ObservedUsedBytes, b.Evidence.DiskLimitBytes, b.Evidence.RestartCount,
+			),
+			Evidence: []string{
+				fmt.Sprintf("disk_limit_bytes=%d", b.Evidence.DiskLimitBytes),
+				fmt.Sprintf("observed_used_bytes=%d", b.Evidence.ObservedUsedBytes),
+				fmt.Sprintf("restart_count=%d", b.Evidence.RestartCount),
+			},
+			Experiment: "Replay the bounded write workload under the captured disk quota, retaining writes when hold is set.",
+		})
 	}
 
 	add(Hypothesis{

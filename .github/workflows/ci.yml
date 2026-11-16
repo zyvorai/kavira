@@ -26,12 +26,9 @@ jobs:
       - run: ./scripts/check-version-sync.sh
       - name: Compile every example and run its regression test
         run: |
-          for ex in oom network-timeout config-regression; do
-            ./bin/kavira compile -f examples/$ex.json -o /tmp/kavira-repairs
-          done
-          for t in /tmp/kavira-repairs/*/regression_test.json; do
-            ./bin/kavira test -f "$t"
-          done
+          ./bin/kavira compile -d examples -o /tmp/kavira-repairs
+          ./bin/kavira test -d /tmp/kavira-repairs --format junit | tee /tmp/kavira-junit.xml
+          ./bin/kavira summarize -f /tmp/kavira-repairs/inc-oom-001/verdict.json | grep -q repair_held
 
   e2e:
     runs-on: ubuntu-latest

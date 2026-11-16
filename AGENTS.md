@@ -4,7 +4,7 @@ Guidance for AI coding agents and humans working in this repository.
 
 ## What KAVIRA is
 
-A Go CLI and embedded web console that compiles captured incident evidence (container OOM, network timeout, configuration regression) into an isolated reproducer, one-factor experiments, and a repair package. Single static binary, zero third-party dependencies.
+A Go CLI and embedded web console that compiles captured incident evidence (container OOM, network timeout, configuration regression, disk pressure) into an isolated reproducer, one-factor experiments, and a repair package. Single static binary, zero third-party dependencies.
 
 ## Hard boundaries
 
@@ -20,7 +20,7 @@ A Go CLI and embedded web console that compiles captured incident evidence (cont
 
 | Path | What |
 | --- | --- |
-| `cmd/kavira` | CLI: `compile`, `test`, `serve`, `version` |
+| `cmd/kavira` | CLI: `compile`, `test`, `summarize`, `serve`, `version` |
 | `internal/{bundle,hypotheses,runner,compiler}` | The compile pipeline |
 | `internal/api` | HTTP server, auth, embedded console (`static/`) and fixtures (`fixtures/`, must equal `examples/`) |
 | `docs/design/UX-CONTRACT.md` | Console design rules |

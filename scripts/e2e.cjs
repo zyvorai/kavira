@@ -121,7 +121,7 @@ const check = (ok, msg) => { console.log(`${ok ? "ok  " : "FAIL"} ${msg}`); if (
   await page.fill("#inc-q", "zzzz");
   await page.waitForSelector("text=No incidents match");
   await page.click("[data-clear-filter]");
-  check(await page.locator("#inc-table tbody tr").count() === 3, "incidents: clear filters restores rows");
+  check(await page.locator("#inc-table tbody tr").count() === 4, "incidents: clear filters restores rows");
   await page.click('[data-sort="id"]');
   check((await page.locator("#inc-table tbody tr td a").first().textContent()) === "inc-oom-001", "incidents: sort toggles direction");
   await page.locator("#inc-table tbody tr td a").first().focus();
@@ -238,7 +238,7 @@ const check = (ok, msg) => { console.log(`${ok ? "ok  " : "FAIL"} ${msg}`); if (
   check((await page.textContent("main")).includes("<script>window.__xss=1</script>"), "xss: hostile text shown literally");
   await page.goto(base + "/#/incidents");
   await page.waitForSelector("#inc-table tbody tr");
-  check(await page.locator("#inc-table tbody tr").count() === 4, "bundle: custom incident listed");
+  check(await page.locator("#inc-table tbody tr").count() === 5, "bundle: custom incident listed");
   await page.goto(base + "/#/audit");
   await page.waitForSelector("table");
   check((await page.textContent(".banner")).includes("Chain verified"), "audit: chain verified banner");
