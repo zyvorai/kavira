@@ -166,7 +166,23 @@ document.addEventListener("click", async (e) => {
     const r = ctx.current?.repair;
     if (!r) return;
     if (d.download === "test") download("regression_test.json", r.regression_test);
-    else download(`${ctx.current.id}-repair-package.json`, { id: ctx.current.id, verdict: ctx.current.verdict, patch: r.patch, regression_test: r.regression_test, reproduce: ctx.current.reproduce, instructions: r.instructions });
+    else {
+      // Prefer the server zip (same files as WritePackage); fall back to a local JSON summary.
+      try {
+        const res = await fetch(`/api/v1/incidents/${encodeURIComponent(ctx.current.id)}/package.zip`, { credentials: "same-origin" });
+        if (!res.ok) throw new Error("zip unavailable");
+        const blob = await res.blob();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${ctx.current.id}.zip`;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      } catch {
+        download(`${ctx.current.id}-repair-package.json`, { id: ctx.current.id, verdict: ctx.current.verdict, patch: r.patch, regression_test: r.regression_test, reproduce: ctx.current.reproduce, instructions: r.instructions });
+      }
+    }
   } else if (d.sort) {
     const f = ctx.filter;
     f.dir = f.sort === d.sort && f.dir === "asc" ? "desc" : "asc";

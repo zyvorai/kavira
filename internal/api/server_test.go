@@ -50,7 +50,7 @@ func TestSessionAndIncidents(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
 		t.Fatal(err)
 	}
-	if len(body.Incidents) != 3 {
+	if len(body.Incidents) != 4 {
 		t.Fatalf("seeded %d", len(body.Incidents))
 	}
 	for _, inc := range body.Incidents {
@@ -204,6 +204,11 @@ func TestCompileAndIncidentLookup(t *testing.T) {
 	if res := do(t, "GET", srv.URL+"/api/v1/incidents/inc-oom-001", "", "", ck); res.StatusCode != 200 {
 		t.Errorf("incident by id: %d", res.StatusCode)
 	}
+	if res := do(t, "GET", srv.URL+"/api/v1/incidents/inc-oom-001/package.zip", "", "", ck); res.StatusCode != 200 {
+		t.Errorf("package zip: %d", res.StatusCode)
+	} else if ct := res.Header.Get("Content-Type"); ct != "application/zip" {
+		t.Errorf("package zip content-type %q", ct)
+	}
 	if res := do(t, "GET", srv.URL+"/api/v1/nope", "", "", ck); res.StatusCode != 404 {
 		t.Errorf("unknown api: %d", res.StatusCode)
 	}
@@ -228,7 +233,7 @@ func TestIncidentsSortedAndAuditChain(t *testing.T) {
 		Audit []Audit `json:"audit"`
 	}
 	json.NewDecoder(do(t, "GET", srv.URL+"/api/v1/audit", "", "", ck).Body).Decode(&a)
-	if len(a.Audit) != 3 {
+	if len(a.Audit) != 4 {
 		t.Fatalf("audit %d", len(a.Audit))
 	}
 	for i, e := range a.Audit {
@@ -278,7 +283,7 @@ func TestFixturesListAndChainFlag(t *testing.T) {
 	if err := json.NewDecoder(do(t, "GET", srv.URL+"/api/v1/fixtures", "", "", ck).Body).Decode(&f); err != nil {
 		t.Fatal(err)
 	}
-	if len(f.Fixtures) != 3 || f.Fixtures[0].Name == "" || f.Fixtures[0].Class == "" || f.Fixtures[0].Symptom == "" {
+	if len(f.Fixtures) != 4 || f.Fixtures[0].Name == "" || f.Fixtures[0].Class == "" || f.Fixtures[0].Symptom == "" {
 		t.Fatalf("fixtures %+v", f.Fixtures)
 	}
 	var a struct {

@@ -22,7 +22,7 @@ const VERDICTS = {
   not_reproduced: "Not reproduced",
   unsupported: "Unsupported",
 };
-const CLASSES = { container_oom: "Container OOM", network_timeout: "Network timeout", config_regression: "Configuration regression" };
+const CLASSES = { container_oom: "Container OOM", network_timeout: "Network timeout", config_regression: "Configuration regression", disk_pressure: "Disk pressure" };
 
 export const sentence = (v) => {
   const t = String(v ?? "").replace(/_/g, " ");

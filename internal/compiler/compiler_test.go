@@ -3,6 +3,7 @@ package compiler
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/zyvorai/kavira/internal/bundle"
@@ -50,6 +51,30 @@ func TestConfigRepairHeld(t *testing.T) {
 	}
 	if _, err := TestRepair(load(t, "config-regression.json"), rep.Repair.RegressionTest); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestDiskRepairHeld(t *testing.T) {
+	rep := Compile(load(t, "disk-pressure.json"))
+	if rep.Verdict != "repair_held" {
+		t.Fatalf("verdict %s: %s", rep.Verdict, rep.Summary)
+	}
+	if rep.ExactReplay {
+		t.Fatal("exact replay must stay false")
+	}
+	if rep.Repair == nil {
+		t.Fatal("missing repair package")
+	}
+	if _, err := TestRepair(load(t, "disk-pressure.json"), rep.Repair.RegressionTest); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := PackageZIP(load(t, "disk-pressure.json"), rep)
+	if err != nil || len(raw) < 100 {
+		t.Fatalf("package zip: len=%d err=%v", len(raw), err)
+	}
+	sum := Summarize(rep)
+	if !strings.Contains(sum, "repair_held") || !strings.Contains(sum, "inc-disk-001") {
+		t.Fatalf("summarize: %s", sum)
 	}
 }
 

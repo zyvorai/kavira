@@ -85,9 +85,11 @@ func Compile(b bundle.Bundle) Report {
 		compileNetwork(&rep, b)
 	case bundle.ClassConfig:
 		compileConfig(&rep, b)
+	case bundle.ClassDisk:
+		compileDisk(&rep, b)
 	default:
 		rep.Verdict = "unsupported"
-		rep.Summary = "Class is not in the v0 set."
+		rep.Summary = "Class is not in the supported set."
 	}
 	rep.Reproduce = reproduce(rep)
 	return rep
@@ -148,6 +150,70 @@ func compileOOM(rep *Report, b bundle.Bundle) {
 func oomPackage(b bundle.Bundle, patch map[string]any, bound int) *RepairPackage {
 	return &RepairPackage{
 		Title: "Container OOM repair",
+		Patch: patch,
+		RegressionTest: RegressionTest{
+			ID: b.ID, Class: b.Class, Repair: patch,
+			Expect: Expect{MaxFailures: 0, MaxP99Ms: bound},
+		},
+		Instructions: "Re-run kavira test against this package. Do not apply the patch to production from this result alone.",
+	}
+}
+
+func compileDisk(rep *Report, b bundle.Bundle) {
+	limit := b.Evidence.DiskLimitBytes
+	original := runner.RunDisk(b.Workload, limit, b.Workload.Hold)
+	rep.Experiments = append(rep.Experiments, exp("original", "disk_limit", "captured quota, hold as captured", original))
+	rep.Measurements["original_failures"] = original.Failures
+	rep.Measurements["original_p99_ms"] = original.P99Ms
+	if original.Failures == 0 {
+		rep.Verdict = "not_reproduced"
+		rep.Summary = "Bounded write workload did not fail under the captured disk quota. No repair package."
+		rep.Hypotheses = hypotheses.Mark(rep.Hypotheses, "disk_quota", "not_reproduced")
+		return
+	}
+	rep.Hypotheses = hypotheses.Mark(rep.Hypotheses, "disk_quota", "reproduced")
+
+	raised := limit
+	need := b.Workload.BytesPerRequest * int64(b.Workload.Requests)
+	if need > raised {
+		raised = need + need/5
+	}
+	raisedRun := runner.RunDisk(b.Workload, raised, true)
+	rep.Experiments = append(rep.Experiments, exp("repair_raise_quota", "disk_limit", fmt.Sprintf("%d -> %d", limit, raised), raisedRun))
+
+	unhold := runner.RunDisk(b.Workload, limit, false)
+	rep.Experiments = append(rep.Experiments, exp("repair_drop_hold", "hold", "true -> false (rotate / flush)", unhold))
+
+	bound := b.Workload.ExpectedMaxP99Ms
+	if bound < 1 {
+		bound = 2000
+	}
+	if raisedRun.Failures == 0 && raisedRun.P99Ms <= bound {
+		rep.Repair = diskPackage(b, map[string]any{
+			"disk_limit_bytes": raised,
+			"hold":             true,
+		}, bound)
+		rep.Verdict = "repair_held"
+		rep.Summary = "Failure reproduced under the captured quota. Raising the quota held, and latency stayed inside the bound."
+		return
+	}
+	if unhold.Failures == 0 && unhold.P99Ms <= bound {
+		rep.Repair = diskPackage(b, map[string]any{
+			"disk_limit_bytes": limit,
+			"hold":             false,
+			"note":             "rotate or flush retained writes; shrink the burst",
+		}, bound)
+		rep.Verdict = "repair_held"
+		rep.Summary = "Failure reproduced. Dropping the hold (rotate/flush) held inside the captured quota."
+		return
+	}
+	rep.Verdict = "repair_failed"
+	rep.Summary = "Failure reproduced. Neither raising the quota nor dropping the hold held inside the latency bound."
+}
+
+func diskPackage(b bundle.Bundle, patch map[string]any, bound int) *RepairPackage {
+	return &RepairPackage{
+		Title: "Disk pressure repair",
 		Patch: patch,
 		RegressionTest: RegressionTest{
 			ID: b.ID, Class: b.Class, Repair: patch,
@@ -281,6 +347,8 @@ func fileStem(class string) string {
 		return "network-timeout"
 	case bundle.ClassConfig:
 		return "config-regression"
+	case bundle.ClassDisk:
+		return "disk-pressure"
 	default:
 		return class
 	}
@@ -334,6 +402,16 @@ func TestRepair(b bundle.Bundle, test RegressionTest) (runner.Result, error) {
 			hold, _ = v.(bool)
 		}
 		result = runner.RunOOM(b.Workload, limit, hold)
+	case bundle.ClassDisk:
+		limit := b.Evidence.DiskLimitBytes
+		hold := b.Workload.Hold
+		if v, ok := test.Repair["disk_limit_bytes"]; ok {
+			limit = asInt64(v)
+		}
+		if v, ok := test.Repair["hold"]; ok {
+			hold, _ = v.(bool)
+		}
+		result = runner.RunDisk(b.Workload, limit, hold)
 	case bundle.ClassNetwork:
 		n := *b.Network
 		if v, ok := asInt(test.Repair["timeout_ms"]); ok {

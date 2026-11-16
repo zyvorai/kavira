@@ -10,6 +10,7 @@ const (
 	ClassOOM     = "container_oom"
 	ClassNetwork = "network_timeout"
 	ClassConfig  = "config_regression"
+	ClassDisk    = "disk_pressure"
 )
 
 // Bundle is captured production evidence for one supported incident.
@@ -28,6 +29,8 @@ type Bundle struct {
 type Evidence struct {
 	MemoryLimitBytes  int64    `json:"memory_limit_bytes,omitempty"`
 	ObservedPeakBytes int64    `json:"observed_peak_bytes,omitempty"`
+	DiskLimitBytes    int64    `json:"disk_limit_bytes,omitempty"`
+	ObservedUsedBytes int64    `json:"observed_used_bytes,omitempty"`
 	RestartCount      int      `json:"restart_count,omitempty"`
 	P99Ms             int      `json:"p99_ms,omitempty"`
 	DeployChange      string   `json:"deploy_change,omitempty"`
@@ -79,7 +82,7 @@ func (b Bundle) Validate() error {
 		return fmt.Errorf("bundle id is required")
 	}
 	switch b.Class {
-	case ClassOOM, ClassNetwork, ClassConfig:
+	case ClassOOM, ClassNetwork, ClassConfig, ClassDisk:
 	default:
 		return fmt.Errorf("unsupported class %q", b.Class)
 	}
@@ -92,6 +95,17 @@ func (b Bundle) Validate() error {
 		}
 		if b.Evidence.MemoryLimitBytes < 1 {
 			return fmt.Errorf("oom evidence memory_limit_bytes must be >= 1")
+		}
+	}
+	if b.Class == ClassDisk {
+		if b.Workload.Requests < 1 {
+			return fmt.Errorf("disk workload requests must be >= 1")
+		}
+		if b.Workload.BytesPerRequest < 1 {
+			return fmt.Errorf("disk workload bytes_per_request must be >= 1")
+		}
+		if b.Evidence.DiskLimitBytes < 1 {
+			return fmt.Errorf("disk evidence disk_limit_bytes must be >= 1")
 		}
 	}
 	if b.Class == ClassNetwork {

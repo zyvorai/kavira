@@ -21,9 +21,7 @@ serve: build
 	./bin/kavira serve
 
 compile-fixtures: build
-	./bin/kavira compile -f examples/oom.json -o repairs
-	./bin/kavira compile -f examples/network-timeout.json -o repairs
-	./bin/kavira compile -f examples/config-regression.json -o repairs
+	./bin/kavira compile -d examples -o repairs
 
 clean:
 	rm -rf bin repairs coverage.out

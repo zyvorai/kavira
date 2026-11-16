@@ -24,6 +24,15 @@ type Result struct {
 	Passed     bool   `json:"passed"`
 }
 
+// RunDisk reconstructs a volume quota: each request "writes" bytes_per_request against limit.
+// When hold is true, writes accumulate (like a log shipper that does not rotate). When false,
+// each write is checked alone. This is a bounded stand-in, not a filesystem trace.
+func RunDisk(w bundle.Workload, limit int64, hold bool) Result {
+	r := RunOOM(w, limit, hold)
+	r.Detail = fmt.Sprintf("disk hold=%t failures=%d/%d written_peak=%d limit=%d", hold, r.Failures, r.Attempts, r.PeakBytes, limit)
+	return r
+}
+
 func RunOOM(w bundle.Workload, limit int64, hold bool) Result {
 	if w.Requests < 1 {
 		w.Requests = 1
