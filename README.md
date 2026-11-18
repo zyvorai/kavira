@@ -2,6 +2,8 @@
 
 # KAVIRA
 
+[Client overview (PDF)](docs/KAVIRA-Client-Overview.pdf)
+
 [![CI](https://github.com/zyvorai/kavira/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/kavira/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-0071e3)](LICENSE)
 [![Go](https://img.shields.io/badge/go-1.23%2B-2997ff)](go.mod)
