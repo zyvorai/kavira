@@ -146,8 +146,8 @@ All `/api/v1` routes except `health` and `session` need the `kavira_session` coo
 
 | Product | Role next to KAVIRA |
 | --- | --- |
-| [Zyntra](https://github.com/zyvorai/zyntra) | Rank a human-approved action. KAVIRA does not approve production changes. |
-| [Verixa](https://github.com/zyvorai/verixa) | Rehearse simulated agent actions. KAVIRA runs the isolated workload. |
+| [Zyntra](https://github.com/zyvorai/zyvor-zyntra-site) | Rank a human-approved action. KAVIRA does not approve production changes. |
+| [Verixa](https://github.com/zyvorai/zyvor-verixa-site) | Rehearse simulated agent actions. KAVIRA runs the isolated workload. |
 | [KubeFlight](https://github.com/zyvorai/kubeflight) | Preflight a deploy. KAVIRA reconstructs a failure that already happened. |
 
 Overlap with incident investigation, deterministic replay, and recording debuggers is real. The claim is the exportable reproducer plus the regression test, for the supported classes only.
