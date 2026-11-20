@@ -1,0 +1,17 @@
+name: Bug report
+description: Something is wrong or confusing
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes: { label: What happened, description: "What you expected and what you saw. Paste the verdict and, if relevant, the evidence bundle (remove secrets)." }
+    validations: { required: true }
+  - type: input
+    id: version
+    attributes: { label: "`kavira version`" }
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options: [CLI compile, CLI test, Console, API, Deploy, Docs]
+    validations: { required: true }

@@ -1,0 +1,16 @@
+# docker compose -f deploy/docker-compose.yml up -d
+# Set the two secrets in the environment or a .env file next to this file.
+services:
+  kavira:
+    image: ghcr.io/zyvorai/kavira:${KAVIRA_VERSION:-0.1.0}
+    # build: { context: .., args: { VERSION: dev } }   # uncomment to build locally
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"   # put TLS in front; do not publish plain HTTP to the internet
+    environment:
+      KAVIRA_ADMIN_PASSWORD: ${KAVIRA_ADMIN_PASSWORD:?set KAVIRA_ADMIN_PASSWORD}
+      KAVIRA_SESSION_KEY: ${KAVIRA_SESSION_KEY:?set KAVIRA_SESSION_KEY}
+      KAVIRA_COOKIE_SECURE: ${KAVIRA_COOKIE_SECURE:-0}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]

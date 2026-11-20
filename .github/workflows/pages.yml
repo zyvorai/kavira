@@ -1,0 +1,36 @@
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", "docs/ux/**", "docs/social/**", "internal/**", "cmd/**", "examples/**", "go.mod", "scripts/build-site.sh", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      # The live demo is the real console on API responses recorded from the real binary, so Go is needed.
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.23"
+      - run: ./scripts/build-site.sh
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v5

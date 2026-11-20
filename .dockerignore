@@ -1,0 +1,10 @@
+.git
+.github
+bin
+repairs
+_site
+docs
+site
+scripts
+*.md
+node_modules

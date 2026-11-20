@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kavira
+  labels: { app.kubernetes.io/name: kavira }
+spec:
+  selector: { app.kubernetes.io/name: kavira }
+  ports: [{ name: http, port: 80, targetPort: http }]
