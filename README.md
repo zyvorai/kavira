@@ -5,7 +5,7 @@
 [Client overview (PDF)](docs/KAVIRA-Client-Overview.pdf)
 
 [![CI](https://github.com/zyvorai/kavira/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/kavira/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-Apache--2.0-0071e3)](LICENSE)
+[![License: Zyvor Production 1.0](https://img.shields.io/badge/License-Zyvor_Production_1.0-1d1d1f.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/go-1.23%2B-2997ff)](go.mod)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-63e6be)](go.mod)
 [![Docs](https://img.shields.io/badge/docs-site-000000)](https://zyvorai.github.io/kavira/)
@@ -197,11 +197,11 @@ See [deploy/README.md](deploy/README.md) for the release image, `docker compose`
 
 ## Support
 
-Free under Apache-2.0. If it helps you, you can donate any amount you like: <https://rzp.io/rzp/utwdYh3>. A donation is voluntary and supports development and maintenance. It is not a purchase: it buys no support, SLA, features, priority or license, and it is not tax-deductible (Zyvor AI Labs Private Limited is a company, not a charity). Support contracts are separate. The software is free. Paid support is the one Zyvor Support meter, per node per year and never stacked per product: Supported INR 59,999 incl. 18% GST in India / USD 600 excl. tax elsewhere (minimum 5 nodes: INR 299,995 / USD 3,000); Supported Plus INR 119,999 / USD 1,200 (minimum INR 599,995 / USD 6,000). Prices: INR incl. 18% GST in India; US dollars excl. tax elsewhere (VAT, GST or sales tax added where applicable). Pay online by UPI, card or netbanking where a buy page exists; international cards work (charged in rupees); or request a US-dollar invoice by bank transfer. Buy / get a quote: https://zyvor.dev/buy. Custom pricing: contact sales@zyvor.dev.
+Non-production use is free under the Zyvor Production License v1.0; production use requires a commercial license (sales@zyvor.dev). If it helps you, you can donate any amount you like: <https://rzp.io/rzp/utwdYh3>. A donation is voluntary and supports development and maintenance. It is not a purchase: it buys no support, SLA, features, priority or license, and it is not tax-deductible (Zyvor AI Labs Private Limited is a company, not a charity). Support contracts are separate. The software is free. Paid support is the one Zyvor Support meter, per node per year and never stacked per product: Supported INR 59,999 incl. 18% GST in India / USD 600 excl. tax elsewhere (minimum 5 nodes: INR 299,995 / USD 3,000); Supported Plus INR 119,999 / USD 1,200 (minimum INR 599,995 / USD 6,000). Prices: INR incl. 18% GST in India; US dollars excl. tax elsewhere (VAT, GST or sales tax added where applicable). Pay online by UPI, card or netbanking where a buy page exists; international cards work (charged in rupees); or request a US-dollar invoice by bank transfer. Buy / get a quote: https://zyvor.dev/buy. Custom pricing: contact sales@zyvor.dev.
 
 ## License
 
-[Apache-2.0](LICENSE). Copyright 2026 Zyvor AI Labs.
+Source-available under the **[Zyvor Production License v1.0](LICENSE)** (SPDX `LicenseRef-Zyvor-Production-1.0`; see [NOTICE](NOTICE)). Non-production use is free; production use requires a commercial license from Zyvor AI Labs ([zyvor.dev/buy](https://zyvor.dev/buy), 30-day trial key available). Copyright 2026 Zyvor AI Labs.
 
 <div align="center">
 

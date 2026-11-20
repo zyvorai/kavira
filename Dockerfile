@@ -11,7 +11,7 @@ ARG VERSION=dev
 LABEL org.opencontainers.image.title="KAVIRA" \
       org.opencontainers.image.description="Turn an outage into a reproducible test" \
       org.opencontainers.image.source="https://github.com/zyvorai/kavira" \
-      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.licenses="LicenseRef-Zyvor-Production-1.0" \
       org.opencontainers.image.version="${VERSION}"
 COPY --from=build /out/kavira /kavira
 EXPOSE 8080

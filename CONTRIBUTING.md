@@ -11,4 +11,4 @@
 5. **Console changes** follow [docs/design/UX-CONTRACT.md](docs/design/UX-CONTRACT.md): tokens only, light and dark, 390px with no horizontal scroll. Run `make shots` and look at the result.
 6. Add a line under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md).
 
-By contributing you agree your work is licensed under Apache-2.0.
+By contributing you agree your work is licensed under the Zyvor Production License v1.0.
