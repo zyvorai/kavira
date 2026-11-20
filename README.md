@@ -2,8 +2,6 @@
 
 # KAVIRA
 
-[Client overview (PDF)](docs/KAVIRA-Client-Overview.pdf)
-
 [![CI](https://github.com/zyvorai/kavira/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/kavira/actions/workflows/ci.yml)
 [![License: Zyvor Production 1.0](https://img.shields.io/badge/License-Zyvor_Production_1.0-1d1d1f.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/go-1.23%2B-2997ff)](go.mod)
