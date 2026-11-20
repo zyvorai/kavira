@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright 2026 Zyvor AI Labs · https://zyvor.dev
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+
 # KAVIRA — remote deploy (cross-compile + scp + systemd user service)
 #
 # KAVIRA is one static Go binary with the console embedded, so there is no

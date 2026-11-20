@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright 2026 Zyvor AI Labs · https://zyvor.dev
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+
 # Fails when the version in cmd/kavira/main.go disagrees with the changelog or the deploy manifests.
 # Same command locally: ./scripts/check-version-sync.sh   (CI: ci.yml test, release.yml verify)
 set -euo pipefail

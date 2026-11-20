@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright 2026 Zyvor AI Labs · https://zyvor.dev
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+
 # Assemble the Pages site into _site/:
 #   /            site/ (landing) + shared images from docs/social and docs/ux
 #   /demo/       the REAL console (internal/api/static) running on precompiled results, no server

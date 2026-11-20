@@ -1,3 +1,6 @@
+// Copyright 2026 Zyvor AI Labs · https://zyvor.dev
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+
 // Replaces js/api.js in the published demo. The rest of the console is the real code, unchanged.
 // Every response comes from data/*.json, which build-site.sh records from the real API of a local server.
 // Same exports as the real js/api.js: ApiError and api().

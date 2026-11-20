@@ -1,3 +1,6 @@
+// Copyright 2026 Zyvor AI Labs · https://zyvor.dev
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+
 import { api } from "./api.js";
 import { href } from "./router.js";
 import { h, raw, pill, when, relTime, classLabel, verdictLabel, sentence, bytes, pageHero, listEmpty, skeleton } from "./ui.js";

@@ -1,3 +1,6 @@
+// Copyright 2026 Zyvor AI Labs · https://zyvor.dev
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+
 // KAVIRA console end-to-end + screenshot audit (Playwright).
 // Same command locally: make e2e   (or: node scripts/e2e.cjs [--shots docs/ux] [--base https://host:port --password PW | --demo])
 // --demo: the target runs the demo gate (admin / Admin@321), so expect the hint and use that password. Self-signed TLS is accepted.

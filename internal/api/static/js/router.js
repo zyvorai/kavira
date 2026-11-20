@@ -1,3 +1,6 @@
+// Copyright 2026 Zyvor AI Labs · https://zyvor.dev
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+
 // Hash routes: #/overview  #/incidents  #/incidents/<id>/<tab>  #/audit
 // Malformed escapes (e.g. %E0) must not throw; keep the raw segment instead.
 const decode = (s) => { try { return decodeURIComponent(s); } catch { return s; } };
