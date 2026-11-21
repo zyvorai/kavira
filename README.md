@@ -201,6 +201,8 @@ A commercial license is required to run it (sales@zyvor.dev). If it helps you, y
 
 Source-available under the **[Zyvor Production License v1.0](LICENSE)** (SPDX `LicenseRef-Zyvor-Production-1.0`; see [NOTICE](NOTICE)). Evaluation is free for 30 days per organization; production use requires a commercial license from Zyvor AI Labs ([zyvor.dev/buy](https://zyvor.dev/buy), 30-day trial key available). Copyright 2026 Zyvor AI Labs.
 
+**Price:** INR 49,999 per team per year incl. 18% GST in India; US$504 per team per year excl. tax elsewhere. Buy: [zyvor.dev/buy](https://zyvor.dev/buy). Orders of USD 5,000 or more and quotes are invoiced in USD through Skydo.
+
 <div align="center">
 
 **Turn an outage into a reproducible test.** · [Docs](https://zyvorai.github.io/kavira/) · [Quickstart](#quickstart) · [Security](SECURITY.md)
