@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Browser check of the built Pages site, served under the real /kavira/ sub-path (as GitHub Pages does).
 // Same command locally: make site-check      (or: ./scripts/build-site.sh && node scripts/site-check.cjs [--shots dir] [--base URL])

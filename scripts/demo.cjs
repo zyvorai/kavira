@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Records the README demo: sign in, compile an example, walk evidence -> experiments -> repairs.
 // Same command locally: make demo   (needs playwright-core, ffmpeg, and a built ./bin/kavira)

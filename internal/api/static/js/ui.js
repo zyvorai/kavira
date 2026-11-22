@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Rendering helpers. `h` is a tagged template that HTML-escapes every
 // interpolation unless it is wrapped in raw() or is itself the result of h``.
