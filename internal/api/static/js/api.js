@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Thin fetch wrapper. Errors carry the HTTP status; 401 on an authed call
 // fires `kavira-auth-expired` so the shell can return to the login screen.
