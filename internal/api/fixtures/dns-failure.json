@@ -1,0 +1,25 @@
+{
+  "id": "inc-dns-001",
+  "class": "dns_failure",
+  "service": "checkout",
+  "symptom": "Lookups of internal service names time out after the cluster DNS was moved behind a forwarder.",
+  "evidence": {
+    "p99_ms": 3100,
+    "deploy_change": "Cluster DNS moved behind a forwarder; client resolver timeout unchanged",
+    "notes": [
+      "Resolver latency, timeout and retries are captured settings, recreated on a UDP stub on loopback.",
+      "The stub answers late from the fifth query on; it is selected, not a sample of real resolver behaviour.",
+      "Names resolved before the degradation are the ones a cache could have served."
+    ]
+  },
+  "dns": {
+    "latency_ms": 60,
+    "degraded_after": 4,
+    "nxdomain_percent": 0,
+    "timeout_ms": 30,
+    "retries": 1,
+    "cache": false,
+    "lookups": 8,
+    "names": 4
+  }
+}

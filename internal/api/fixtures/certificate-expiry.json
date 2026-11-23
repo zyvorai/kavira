@@ -1,0 +1,19 @@
+{
+  "id": "inc-cert-001",
+  "class": "certificate_expiry",
+  "service": "payments-gateway",
+  "symptom": "Clients got x509 expired errors for about a day before the certificate was renewed.",
+  "evidence": {
+    "deploy_change": "Certificate lifetime shortened from 90 to roughly 29 days; rotation job unchanged",
+    "notes": [
+      "Hours count from the first issue on a virtual clock. The wall clock plays no part in validity.",
+      "probe_hours are the moments clients are known to have connected, supplied by hand."
+    ]
+  },
+  "cert": {
+    "lifetime_hours": 700,
+    "rotation_window_hours": 24,
+    "check_interval_hours": 72,
+    "probe_hours": [100, 400, 690, 705, 715, 730]
+  }
+}

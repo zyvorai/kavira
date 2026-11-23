@@ -3,6 +3,7 @@
 | File | What |
 | --- | --- |
 | `design/UX-CONTRACT.md` | Console design rules, tokens, laws, checklist |
+| `CLASSES.md` | The eight incident classes: models, bounds, determinism, rejected ideas |
 | `ANALYSIS.md` | repeat, minimize, postmortem, export |
 | `RESEARCH.md` | Prior art, ranked ideas, what was built and rejected |
 | `proposals/0001-kavira-incident-compiler.md` | Original proposal |

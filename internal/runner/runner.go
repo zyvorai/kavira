@@ -82,12 +82,15 @@ func RunOOM(w bundle.Workload, limit int64, hold bool) Result {
 }
 
 // RunNetwork dials a local listener under the captured conditions.
-// Loss is selected, not random: the first lossPercent of attempts are reset.
+// Loss is selected, not random: the first lossPercent of attempts are reset. Jitter is a deterministic
+// per-attempt hash, not a random draw. The optional Toxiproxy-style arms (bandwidth cap, reset after N
+// bytes, slow close, response size) are off at zero.
 func RunNetwork(n bundle.NetworkCondition) Result {
-	attempts := n.Attempts
-	if attempts < 1 {
-		attempts = 1
+	if n.Attempts < 1 {
+		n.Attempts = 1
 	}
+	attempts := n.Attempts
+	size := responseSize(n)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return Result{Attempts: attempts, Failures: attempts, Detail: err.Error()}
@@ -95,6 +98,7 @@ func RunNetwork(n bundle.NetworkCondition) Result {
 	closeOnce := sync.OnceFunc(func() { _ = ln.Close() })
 	defer closeOnce()
 
+	var handlers sync.WaitGroup
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
@@ -103,13 +107,19 @@ func RunNetwork(n bundle.NetworkCondition) Result {
 			if err != nil {
 				return
 			}
-			handle(conn, n, i)
+			// One goroutine per connection: a slow attempt must not delay the next one.
+			handlers.Add(1)
+			go func(i int) {
+				defer handlers.Done()
+				handle(conn, n, i)
+			}(i)
 		}
 	}()
 
 	samples := make([]time.Duration, 0, attempts)
 	failures := 0
-	dialer := net.Dialer{Timeout: time.Duration(n.TimeoutMs) * time.Millisecond}
+	timeout := time.Duration(n.TimeoutMs) * time.Millisecond
+	dialer := net.Dialer{Timeout: timeout}
 	for i := 0; i < attempts; i++ {
 		start := time.Now()
 		conn, err := dialer.Dial("tcp", ln.Addr().String())
@@ -118,27 +128,59 @@ func RunNetwork(n bundle.NetworkCondition) Result {
 			samples = append(samples, time.Since(start))
 			continue
 		}
-		_ = conn.SetDeadline(time.Now().Add(time.Duration(n.TimeoutMs) * time.Millisecond))
-		buf := make([]byte, 2)
+		_ = conn.SetDeadline(time.Now().Add(timeout))
+		buf := make([]byte, size)
 		_, err = io.ReadFull(conn, buf)
+		if err == nil && n.SlowCloseMs > 0 {
+			// A client that waits for the server to close (read until EOF) pays for a slow close.
+			_, err = io.Copy(io.Discard, conn)
+		}
 		_ = conn.Close()
 		elapsed := time.Since(start)
 		samples = append(samples, elapsed)
-		if err != nil || string(buf) != "ok" {
+		if err != nil || string(buf[:2]) != "ok" {
 			failures++
 		}
 	}
 	// Close first: if any dial failed, the accept loop would otherwise wait forever.
 	closeOnce()
 	<-done
+	handlers.Wait()
 	p99 := percentile(samples, 99)
 	return Result{
 		Failures: failures,
 		Attempts: attempts,
 		P99Ms:    int(p99 / time.Millisecond),
-		Detail:   fmt.Sprintf("delay=%dms loss=%d%% timeout=%dms policy_deny=%t failures=%d/%d", n.DelayMs, n.LossPercent, n.TimeoutMs, n.PolicyDeny, failures, attempts),
+		Detail:   networkDetail(n, failures, attempts),
 		Passed:   failures == 0,
 	}
+}
+
+func networkDetail(n bundle.NetworkCondition, failures, attempts int) string {
+	d := fmt.Sprintf("delay=%dms loss=%d%% timeout=%dms policy_deny=%t", n.DelayMs, n.LossPercent, n.TimeoutMs, n.PolicyDeny)
+	if n.JitterMs > 0 {
+		d += fmt.Sprintf(" jitter=%dms", n.JitterMs)
+	}
+	if n.BandwidthBps > 0 {
+		d += fmt.Sprintf(" bandwidth=%dB/s", n.BandwidthBps)
+	}
+	if n.ResetAfterBytes > 0 {
+		d += fmt.Sprintf(" reset_after=%dB", n.ResetAfterBytes)
+	}
+	if n.SlowCloseMs > 0 {
+		d += fmt.Sprintf(" slow_close=%dms", n.SlowCloseMs)
+	}
+	if n.ResponseBytes > 0 {
+		d += fmt.Sprintf(" response=%dB", n.ResponseBytes)
+	}
+	return fmt.Sprintf("%s failures=%d/%d", d, failures, attempts)
+}
+
+func responseSize(n bundle.NetworkCondition) int {
+	if n.ResponseBytes >= 2 {
+		return n.ResponseBytes
+	}
+	return 2
 }
 
 func handle(conn net.Conn, n bundle.NetworkCondition, i int) {
@@ -149,10 +191,63 @@ func handle(conn net.Conn, n bundle.NetworkCondition, i int) {
 	if n.LossPercent > 0 && i*100/n.Attempts < n.LossPercent {
 		return
 	}
-	if n.DelayMs > 0 {
-		time.Sleep(time.Duration(n.DelayMs) * time.Millisecond)
+	delay := time.Duration(n.DelayMs) * time.Millisecond
+	if n.JitterMs > 0 {
+		delay += time.Duration(mix(uint64(i), 0)%uint64(n.JitterMs+1)) * time.Millisecond
 	}
-	_, _ = conn.Write([]byte("ok"))
+	if delay > 0 {
+		time.Sleep(delay)
+	}
+	size := responseSize(n)
+	body := make([]byte, size)
+	copy(body, "ok")
+	for j := 2; j < size; j++ {
+		body[j] = 'x'
+	}
+	// A client that gave up must not pin this goroutine: every write has a deadline.
+	_ = conn.SetWriteDeadline(time.Now().Add(2*time.Duration(n.TimeoutMs)*time.Millisecond + 100*time.Millisecond))
+	if n.ResetAfterBytes > 0 && n.ResetAfterBytes < size {
+		_, _ = conn.Write(body[:n.ResetAfterBytes])
+		if tc, ok := conn.(*net.TCPConn); ok {
+			_ = tc.SetLinger(0) // close sends RST, like Toxiproxy reset_peer
+		}
+		return
+	}
+	if n.BandwidthBps > 0 {
+		chunk := n.BandwidthBps / 100
+		if chunk < 1 {
+			chunk = 1
+		}
+		if chunk > 4096 {
+			chunk = 4096
+		}
+		for off := 0; off < size; {
+			end := off + chunk
+			if end > size {
+				end = size
+			}
+			if _, err := conn.Write(body[off:end]); err != nil {
+				return
+			}
+			time.Sleep(time.Duration(int64(end-off) * int64(time.Second) / int64(n.BandwidthBps)))
+			off = end
+		}
+	} else if _, err := conn.Write(body); err != nil {
+		return
+	}
+	if n.SlowCloseMs > 0 {
+		// Hold the connection open, but return as soon as the client closes it.
+		_ = conn.SetReadDeadline(time.Now().Add(time.Duration(n.SlowCloseMs) * time.Millisecond))
+		_, _ = io.Copy(io.Discard, conn)
+	}
+}
+
+// mix is splitmix64: a deterministic hash used where a random draw would otherwise be needed.
+func mix(a, b uint64) uint64 {
+	z := a*0x9e3779b97f4a7c15 + b*0xbf58476d1ce4e5b9 + 0x94d049bb133111eb
+	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9
+	z = (z ^ (z >> 27)) * 0x94d049bb133111eb
+	return z ^ (z >> 31)
 }
 
 // maxConfigBatch bounds the allocation (batch*256KiB) and sleep (batch*2ms) in RunConfig.

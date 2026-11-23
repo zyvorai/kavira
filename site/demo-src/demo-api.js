@@ -43,7 +43,7 @@ export async function api(path, { method = "GET", body } = {}) {
     const name = typeof body === "object" && body ? body.fixture : undefined;
     const { fixtures } = await load("fixtures.json");
     const fx = name && fixtures.find((f) => f.name === name);
-    if (!fx) throw new ApiError("The static demo only has the three bundled examples. To compile your own bundle, run kavira serve locally.", 400);
+    if (!fx) throw new ApiError("The static demo only has the bundled examples. To compile your own bundle, run kavira serve locally.", 400);
     return load(`incident-${fx.id}.json`);
   }
   throw new ApiError("not found", 404);

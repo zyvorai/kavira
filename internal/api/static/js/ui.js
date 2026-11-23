@@ -25,7 +25,8 @@ const VERDICTS = {
   not_reproduced: "Not reproduced",
   unsupported: "Unsupported",
 };
-const CLASSES = { container_oom: "Container OOM", network_timeout: "Network timeout", config_regression: "Configuration regression", disk_pressure: "Disk pressure" };
+const CLASSES = { container_oom: "Container OOM", network_timeout: "Network timeout", config_regression: "Configuration regression", disk_pressure: "Disk pressure",
+  dns_failure: "DNS failure", certificate_expiry: "Certificate expiry", connection_pool_exhaustion: "Connection pool exhaustion", retry_storm: "Retry storm" };
 
 export const sentence = (v) => {
   const t = String(v ?? "").replace(/_/g, " ");

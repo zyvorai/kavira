@@ -14,7 +14,7 @@
 
 **KAVIRA compiles captured production evidence into an isolated reproducer, one-factor experiments, and a repair package.** The proposer lists competing explanations. Execution decides whether the failure reproduces and whether the repair holds.
 
-**Execution is the verdict** · **Exact replay is not claimed** · **Local-first** · **Zero dependencies** · **Four incident classes**
+**Execution is the verdict** · **Exact replay is not claimed** · **Local-first** · **Zero dependencies** · **Eight incident classes**
 
 🎮 **[Live demo](https://zyvorai.github.io/kavira/demo/)** · 📖 **[Site](https://zyvorai.github.io/kavira/)** · 🚀 **[Quickstart](#quickstart)** · 🔒 **[Security](SECURITY.md)**
 
@@ -52,9 +52,15 @@ The console follows the Zyvor [UX contract](docs/design/UX-CONTRACT.md), shared 
 | Incident | Experiment | Repair check |
 | --- | --- | --- |
 | Container OOM | Bounded workload under the captured memory limit | Failures, memory, latency bound |
-| Network timeout | Selected delay, loss, or policy on a local listener | Recovery and connectivity |
+| Network timeout | Selected delay, jitter, loss, policy, bandwidth cap, reset-after-N-bytes, or slow close on a local listener | Recovery and connectivity |
 | Configuration regression | Previous and current configs, same workload | Behavior diff and a regression test |
 | Disk pressure | Bounded write workload under the captured volume quota | Failures, written peak, latency bound |
+| DNS failure | UDP stub resolver on loopback with injected latency or NXDOMAIN, client with timeout, retries, cache | Timeout, cache or name fix holds |
+| Certificate expiry | Throwaway certificates and real loopback TLS handshakes on a virtual clock | Rotation window or interval holds |
+| Connection pool exhaustion | Bounded pool of real loopback connections, optional leak | Pool size, acquire timeout or leak fix holds |
+| Retry storm | Capacity-limited loopback server, synchronized retries | Jitter (with a cap) holds |
+
+All eight are reconstructed on loopback without root. What each one models, what it leaves out and what is timing-dependent: [docs/CLASSES.md](docs/CLASSES.md).
 
 ## Quickstart
 
@@ -161,7 +167,8 @@ Overlap with incident investigation, deterministic replay, and recording debugge
 ![What KAVIRA claims](docs/ux/readme-honesty.jpg)
 
 - Runners reconstruct captured conditions. They do not replay production instruction streams.
-- Network loss is selected (first N percent of attempts), not a random sample.
+- Network loss is selected (first N percent of attempts), not a random sample. Jitter, NXDOMAIN and retry jitter are deterministic hashes, not random draws.
+- Certificate expiry runs on a virtual clock with throwaway certificates. DNS, pool and retry runs sleep for real, so a run near a timeout boundary can flip.
 - Config work cost scales with `batch_size`. It is a bounded stand-in.
 - Do not apply a patch to production from this result alone.
 
@@ -191,7 +198,7 @@ See [deploy/README.md](deploy/README.md) for the release image, `docker compose`
 
 | Area | Status |
 | --- | --- |
-| Four incident classes | Working, covered by tests and CI |
+| Eight incident classes | Working, covered by tests and CI. DNS, certificate, pool and retry-storm runners depend on timing; `kavira repeat` shows how much |
 | Console | Working. Browser end-to-end suite runs every route in light, dark, and 390px |
 | Auth | Single `admin` user, HMAC cookie. A demo gate, not an identity system |
 | State | In memory. A restart clears incidents and the audit log |

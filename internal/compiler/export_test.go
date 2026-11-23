@@ -19,7 +19,7 @@ import (
 // Every class: the "before" test fails on the captured condition and the repaired test passes,
 // through the same TestRepair the CLI uses.
 func TestRegressionBeforeFailsAfterPasses(t *testing.T) {
-	for _, name := range []string{"oom.json", "network-timeout.json", "config-regression.json", "disk-pressure.json"} {
+	for _, name := range []string{"oom.json", "network-timeout.json", "config-regression.json", "disk-pressure.json", "dns-failure.json", "certificate-expiry.json", "connection-pool.json", "retry-storm.json"} {
 		b := load(t, name)
 		rep := Compile(b)
 		files, err := RegressionFiles(b, rep)

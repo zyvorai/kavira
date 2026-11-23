@@ -1,0 +1,26 @@
+{
+  "id": "inc-net-toxics-001",
+  "class": "network_timeout",
+  "service": "export-worker",
+  "symptom": "Large exports time out through the new egress proxy, small calls are fine.",
+  "evidence": {
+    "p99_ms": 2600,
+    "deploy_change": "Egress proxy with a bandwidth cap introduced",
+    "notes": [
+      "Bandwidth, jitter and slow close are Toxiproxy-style factors recreated on a loopback listener.",
+      "Only the bandwidth cap should matter; the other factors are there so minimize can show it."
+    ]
+  },
+  "workload": { "name": "export", "requests": 3, "bytes_per_request": 1000, "expected_max_p99_ms": 1000 },
+  "network": {
+    "delay_ms": 10,
+    "jitter_ms": 5,
+    "loss_percent": 0,
+    "timeout_ms": 200,
+    "policy_deny": false,
+    "bandwidth_bps": 2000,
+    "response_bytes": 1000,
+    "slow_close_ms": 20,
+    "attempts": 3
+  }
+}

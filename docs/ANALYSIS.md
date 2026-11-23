@@ -29,7 +29,10 @@ Delta debugging (ddmin) with the runner as the oracle:
 | Class | Reduced set |
 | --- | --- |
 | `config_regression` | keys that differ between `previous` and `current` |
-| `network_timeout` | non-zero factors among `delay_ms`, `loss_percent`, `policy_deny` (`timeout_ms` is a threshold and stays) |
+| `network_timeout` | non-zero factors among `delay_ms`, `loss_percent`, `policy_deny`, `jitter_ms`, `bandwidth_bps`, `reset_after_bytes`, `slow_close_ms` (`timeout_ms` and `response_bytes` are thresholds or sizes and stay) |
+| `dns_failure` | non-zero `latency_ms` and `nxdomain_percent` |
+| `certificate_expiry` | the probe hours (which handshakes are needed to see an expired certificate) |
+| `connection_pool_exhaustion`, `retry_storm` | the clients (the number of clients that still fails) |
 | `container_oom`, `disk_pressure` | the workload's requests |
 
 The output names what remains (`minimal`), what went away (`removed`), the number of oracle runs, `one_minimal` (the search finished inside the budget) and `verified` (the minimal input failed again when re-executed). `-o` writes a bundle holding only the minimal input; compile it for a verdict.
@@ -52,11 +55,13 @@ Writes `repairs/<id>/regression/` with `bundle.json`, `before_test.json`, `regre
 
 ## Hostile input
 
-Bundles are untrusted, and the runner really allocates, sleeps and dials. `internal/bundle` bounds every quantity before anything runs: raw size 1 MiB, text fields 4 KiB, ids 128 bytes, 100 timeline events, 256 config keys, 1024 requests, 512 MiB of total workload allocation, network attempts, delays and timeouts (and their product) capped at 60 s. No archive format is accepted anywhere, so there is no zip or tar bomb surface; the API only emits zips. Download names are sanitized, ids are checked as directory names before any file is written, and `kavira test` re-validates repaired network conditions read from a regression file.
+Bundles are untrusted, and the runner really allocates, sleeps and dials. `internal/bundle` bounds every quantity before anything runs: raw size 1 MiB, text fields 4 KiB, ids 128 bytes, 100 timeline events, 256 config keys, 1024 requests, 512 MiB of total workload allocation, network attempts, delays and timeouts (and their product) capped at 60 s. The new classes have their own bounds (see `CLASSES.md`). No archive format is accepted anywhere, so there is no zip or tar bomb surface; the API only emits zips. Download names are sanitized, ids are checked as directory names before any file is written, and `kavira test` re-validates repaired network conditions read from a regression file.
+
+The timing-dependent classes (DNS, pool, retry storm) make a noisy oracle. `kavira repeat` first; if the reconstruction is `flaky`, a minimized result is only as good as one sample. The retry-storm minimizer costs about a second per oracle run and normally stops at the 20 s budget with `one_minimal: false`.
 
 ## Examples
 
-`examples/analysis/` holds `config-noisy.json` (six changed keys, minimizes to two) and `oom-burst.json` (24 requests, minimizes to 4), both with a timeline. They live in a subdirectory so `kavira compile -d examples` and the console fixtures stay at the four canonical classes.
+`examples/analysis/` holds `network-toxics.json` (bandwidth cap plus three harmless factors, minimizes to the cap), `config-noisy.json` (six changed keys, minimizes to two) and `oom-burst.json` (24 requests, minimizes to 4), both with a timeline. They live in a subdirectory so `kavira compile -d examples` and the console fixtures stay at the four canonical classes.
 
 ```bash
 kavira repeat -f examples/analysis/oom-burst.json -n 20

@@ -119,14 +119,14 @@ const check = (ok, msg) => { console.log(`${ok ? "ok  " : "FAIL"} ${msg}`); if (
   // incidents filter + sort + keyboard row
   await page.goto(base + "/#/incidents");
   await page.waitForSelector("#inc-q");
-  await page.fill("#inc-q", "net");
+  await page.fill("#inc-q", "inc-net");
   check(await page.locator("#inc-table tbody tr").count() === 1, "incidents: search filters rows");
   await page.fill("#inc-q", "zzzz");
   await page.waitForSelector("text=No incidents match");
   await page.click("[data-clear-filter]");
-  check(await page.locator("#inc-table tbody tr").count() === 4, "incidents: clear filters restores rows");
+  check(await page.locator("#inc-table tbody tr").count() === 8, "incidents: clear filters restores rows");
   await page.click('[data-sort="id"]');
-  check((await page.locator("#inc-table tbody tr td a").first().textContent()) === "inc-oom-001", "incidents: sort toggles direction");
+  check((await page.locator("#inc-table tbody tr td a").first().textContent()) === "inc-retry-001", "incidents: sort toggles direction");
   await page.locator("#inc-table tbody tr td a").first().focus();
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => location.hash.includes("/evidence"));
@@ -162,6 +162,18 @@ const check = (ok, msg) => { console.log(`${ok ? "ok  " : "FAIL"} ${msg}`); if (
   check(pm.suggestedFilename().endsWith("postmortem.md"), "analyze: downloads the postmortem draft");
   const [rz] = await Promise.all([page.waitForEvent("download"), page.click('[data-file="regression.zip"]')]);
   check(rz.suggestedFilename().endsWith("regression.zip"), "analyze: downloads the regression check");
+
+  // analyze on the new classes: class label, an honest confidence run, a held-repair regression download
+  for (const [id, label] of [["inc-dns-001", "DNS failure"], ["inc-cert-001", "Certificate expiry"], ["inc-pool-001", "Connection pool exhaustion"], ["inc-retry-001", "Retry storm"]]) {
+    await page.goto(base + `/#/incidents/${id}/analyze`);
+    await page.waitForSelector("[data-analyze=confidence]");
+    check((await page.textContent("body")).includes(label), `analyze ${id}: class label ${label}`);
+    await page.selectOption("#conf-n", "10");
+    await page.click("[data-analyze=confidence]");
+    await page.waitForSelector("#conf-out .banner");
+    check((await page.textContent("#conf-out")).includes("Wilson"), `analyze ${id}: confidence shows a Wilson interval`);
+    await noScroll(page, `analyze ${id}`);
+  }
 
   // shortcuts
   await page.goto(base + "/#/overview");

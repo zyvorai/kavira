@@ -26,7 +26,7 @@ var ErrNotReproduced = errors.New("the full captured condition did not fail when
 type Report struct {
 	ID          string   `json:"id"`
 	Class       string   `json:"class"`
-	Kind        string   `json:"kind"` // config_keys | network_factors | workload_requests
+	Kind        string   `json:"kind"` // config_keys | network_factors | workload_requests | dns_factors | probe_hours | clients
 	Original    []string `json:"original"`
 	Minimal     []string `json:"minimal"`
 	Removed     []string `json:"removed"`
@@ -108,9 +108,26 @@ func Minimize(b bundle.Bundle, o Options) (Report, bundle.Bundle, error) {
 			names = append(names, "policy_deny=true")
 			apply = append(apply, func(c *bundle.NetworkCondition) { c.PolicyDeny = true })
 		}
+		if n.JitterMs > 0 {
+			names = append(names, fmt.Sprintf("jitter_ms=%d", n.JitterMs))
+			apply = append(apply, func(c *bundle.NetworkCondition) { c.JitterMs = n.JitterMs })
+		}
+		if n.BandwidthBps > 0 {
+			names = append(names, fmt.Sprintf("bandwidth_bps=%d", n.BandwidthBps))
+			apply = append(apply, func(c *bundle.NetworkCondition) { c.BandwidthBps = n.BandwidthBps })
+		}
+		if n.ResetAfterBytes > 0 {
+			names = append(names, fmt.Sprintf("reset_after_bytes=%d", n.ResetAfterBytes))
+			apply = append(apply, func(c *bundle.NetworkCondition) { c.ResetAfterBytes = n.ResetAfterBytes })
+		}
+		if n.SlowCloseMs > 0 {
+			names = append(names, fmt.Sprintf("slow_close_ms=%d", n.SlowCloseMs))
+			apply = append(apply, func(c *bundle.NetworkCondition) { c.SlowCloseMs = n.SlowCloseMs })
+		}
 		build = func(keep []int) bundle.Bundle {
 			c := n
 			c.DelayMs, c.LossPercent, c.PolicyDeny = 0, 0, false
+			c.JitterMs, c.BandwidthBps, c.ResetAfterBytes, c.SlowCloseMs = 0, 0, 0, 0
 			for _, i := range keep {
 				apply[i](&c)
 			}
@@ -140,10 +157,85 @@ func Minimize(b bundle.Bundle, o Options) (Report, bundle.Bundle, error) {
 			}
 			return runner.RunOOM(w, limit, w.Hold).Failures > 0
 		}
+	case bundle.ClassDNS:
+		rep.Kind = "dns_factors"
+		d := *b.DNS
+		var apply []func(*bundle.DNSCondition)
+		if d.LatencyMs > 0 {
+			names = append(names, fmt.Sprintf("latency_ms=%d", d.LatencyMs))
+			apply = append(apply, func(c *bundle.DNSCondition) { c.LatencyMs = d.LatencyMs })
+		}
+		if d.NXDomainPercent > 0 {
+			names = append(names, fmt.Sprintf("nxdomain_percent=%d", d.NXDomainPercent))
+			apply = append(apply, func(c *bundle.DNSCondition) { c.NXDomainPercent = d.NXDomainPercent })
+		}
+		build = func(keep []int) bundle.Bundle {
+			c := d
+			c.LatencyMs, c.NXDomainPercent = 0, 0
+			for _, i := range keep {
+				apply[i](&c)
+			}
+			nb := b
+			nb.DNS = &c
+			return nb
+		}
+		fails = func(keep []int) bool { return runner.RunDNS(*build(keep).DNS).Failures > 0 }
+	case bundle.ClassCert:
+		rep.Kind = "probe_hours"
+		hours := append([]int(nil), b.Cert.ProbeHours...)
+		for _, h := range hours {
+			names = append(names, fmt.Sprintf("probe at hour %d", h))
+		}
+		build = func(keep []int) bundle.Bundle {
+			c := *b.Cert
+			c.ProbeHours = nil
+			for _, i := range keep {
+				c.ProbeHours = append(c.ProbeHours, hours[i])
+			}
+			nb := b
+			nb.Cert = &c
+			return nb
+		}
+		fails = func(keep []int) bool { return len(keep) > 0 && runner.RunCert(*build(keep).Cert).Failures > 0 }
+	case bundle.ClassPool, bundle.ClassRetry:
+		rep.Kind = "clients"
+		n := 0
+		if b.Class == bundle.ClassPool {
+			n = b.Pool.Clients
+		} else {
+			n = b.Retry.Clients
+		}
+		for i := 0; i < n; i++ {
+			names = append(names, fmt.Sprintf("client %d", i+1))
+		}
+		build = func(keep []int) bundle.Bundle {
+			nb := b
+			if b.Class == bundle.ClassPool {
+				p := *b.Pool
+				p.Clients = len(keep)
+				nb.Pool = &p
+			} else {
+				r := *b.Retry
+				r.Clients = len(keep)
+				nb.Retry = &r
+			}
+			return nb
+		}
+		fails = func(keep []int) bool {
+			if len(keep) == 0 {
+				return false
+			}
+			nb := build(keep)
+			if b.Class == bundle.ClassPool {
+				return runner.RunPool(*nb.Pool).Failures > 0
+			}
+			return runner.RunRetry(*nb.Retry).Failures > 0
+		}
 	default:
 		return rep, b, fmt.Errorf("unsupported class %q", b.Class)
 	}
 	rep.Original = append([]string{}, names...)
+	rep.Removed = []string{}
 	if len(names) == 0 {
 		return rep, b, errors.New("no removable factor: nothing in this bundle differs from a clean condition")
 	}
