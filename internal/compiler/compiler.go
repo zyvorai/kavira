@@ -255,6 +255,11 @@ func compileNetwork(rep *Report, b bundle.Bundle) {
 		repaired.TimeoutMs = n.TimeoutMs * 4
 		changed = fmt.Sprintf("timeout_ms %d -> %d", n.TimeoutMs, repaired.TimeoutMs)
 	}
+	if err := bundle.ValidateNetwork(repaired); err != nil {
+		rep.Verdict = "repair_failed"
+		rep.Summary = "Timeouts reproduced. The one-factor repair would leave the bounded network limits (" + err.Error() + "), so it was not run."
+		return
+	}
 	repairRun := runner.RunNetwork(repaired)
 	rep.Experiments = append(rep.Experiments, exp("repair", "one factor", changed, repairRun))
 	bound := n.TimeoutMs * 4
@@ -428,6 +433,9 @@ func TestRepair(b bundle.Bundle, test RegressionTest) (runner.Result, error) {
 		}
 		if v, ok := test.Repair["policy_deny"].(bool); ok {
 			n.PolicyDeny = v
+		}
+		if err := bundle.ValidateNetwork(n); err != nil {
+			return runner.Result{}, err
 		}
 		result = runner.RunNetwork(n)
 	case bundle.ClassConfig:

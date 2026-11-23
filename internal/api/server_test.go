@@ -340,3 +340,110 @@ func TestBrandAssetsAndMeta(t *testing.T) {
 		}
 	}
 }
+
+func TestAnalysisEndpoints(t *testing.T) {
+	srv := httptest.NewServer(New().Handler())
+	defer srv.Close()
+	ck := login(t, srv.URL)
+	base := srv.URL + "/api/v1/incidents/inc-oom-001/"
+
+	// Auth required on every analysis route.
+	for _, p := range []string{"confidence", "minimize", "postmortem.md", "regression.zip"} {
+		if res := do(t, "GET", base+p, "", "", nil); res.StatusCode != 401 {
+			t.Errorf("%s anonymous: %d", p, res.StatusCode)
+		}
+	}
+	cases := []struct {
+		name, method, path string
+		want               int
+		ctype, contains    string
+	}{
+		{"confidence", "GET", "confidence?n=5", 200, "application/json", `"reproduction": "reproduced"`},
+		{"confidence bad n", "GET", "confidence?n=0", 400, "", ""},
+		{"confidence huge n", "GET", "confidence?n=100000", 400, "", ""},
+		{"confidence junk n", "GET", "confidence?n=abc", 400, "", ""},
+		{"confidence post", "POST", "confidence", 405, "", ""},
+		{"minimize", "GET", "minimize", 200, "application/json", `"exact_replay": false`},
+		{"postmortem", "GET", "postmortem.md", 200, "text/markdown", "# Postmortem draft: inc-oom-001"},
+		{"regression zip", "GET", "regression.zip", 200, "application/zip", ""},
+		{"unknown incident", "GET", "../nope/confidence", 404, "", ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			res := do(t, c.method, base+c.path, "", "", ck)
+			if res.StatusCode != c.want {
+				t.Fatalf("status %d want %d", res.StatusCode, c.want)
+			}
+			if c.ctype != "" && !strings.HasPrefix(res.Header.Get("Content-Type"), c.ctype) {
+				t.Fatalf("content-type %q", res.Header.Get("Content-Type"))
+			}
+			if c.contains != "" {
+				var sb strings.Builder
+				buf := make([]byte, 4096)
+				for {
+					n, err := res.Body.Read(buf)
+					sb.Write(buf[:n])
+					if err != nil {
+						break
+					}
+				}
+				if !strings.Contains(sb.String(), c.contains) {
+					t.Fatalf("body lacks %q: %.200s", c.contains, sb.String())
+				}
+			}
+		})
+	}
+}
+
+func TestAnalysisDoesNotChangeAudit(t *testing.T) {
+	s := New()
+	before := len(s.audit)
+	srv := httptest.NewServer(s.Handler())
+	defer srv.Close()
+	ck := login(t, srv.URL)
+	do(t, "GET", srv.URL+"/api/v1/incidents/inc-oom-001/confidence?n=2", "", "", ck)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(s.audit) != before {
+		t.Fatal("analyses must not write the audit log")
+	}
+}
+
+func TestRegressionZipRefusedWithoutHeldRepair(t *testing.T) {
+	srv := httptest.NewServer(New().Handler())
+	defer srv.Close()
+	ck := login(t, srv.URL)
+	raw, _ := os.ReadFile(filepath.Join("..", "..", "examples", "oom.json"))
+	hostile := strings.Replace(string(raw), `"inc-oom-001"`, `"inc-nr-001"`, 1)
+	hostile = strings.Replace(hostile, `"memory_limit_bytes": 3145728`, `"memory_limit_bytes": 67108864`, 1)
+	hostile = strings.Replace(hostile, `"hold": true`, `"hold": false`, 1)
+	if res := do(t, "POST", srv.URL+"/api/v1/compile", "application/json", hostile, ck); res.StatusCode != 200 {
+		t.Fatalf("compile %d", res.StatusCode)
+	}
+	if res := do(t, "GET", srv.URL+"/api/v1/incidents/inc-nr-001/regression.zip", "", "", ck); res.StatusCode != 404 {
+		t.Fatalf("zip for not_reproduced: %d", res.StatusCode)
+	}
+	if res := do(t, "GET", srv.URL+"/api/v1/incidents/inc-nr-001/minimize", "", "", ck); res.StatusCode != 422 {
+		t.Fatalf("minimize for not_reproduced: %d", res.StatusCode)
+	}
+}
+
+func TestCompileRejectsHostileBundles(t *testing.T) {
+	srv := httptest.NewServer(New().Handler())
+	defer srv.Close()
+	ck := login(t, srv.URL)
+	cases := []struct {
+		name, body string
+		want       int
+	}{
+		{"oversize", `{"id":"x","pad":"` + strings.Repeat("A", 1<<20) + `"}`, 413},
+		{"huge workload", `{"id":"h","class":"container_oom","evidence":{"memory_limit_bytes":1073741824},"workload":{"requests":1024,"bytes_per_request":1073741824}}`, 400},
+		{"network bomb", `{"id":"n","class":"network_timeout","network":{"attempts":200,"timeout_ms":60000}}`, 400},
+		{"deep nesting", strings.Repeat("[", 100000), 400},
+	}
+	for _, c := range cases {
+		if res := do(t, "POST", srv.URL+"/api/v1/compile", "application/json", c.body, ck); res.StatusCode != c.want {
+			t.Errorf("%s: %d want %d", c.name, res.StatusCode, c.want)
+		}
+	}
+}

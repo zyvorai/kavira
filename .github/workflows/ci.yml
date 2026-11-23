@@ -11,11 +11,15 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.26.x", "1.27.x"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: "1.23"
+          go-version: ${{ matrix.go }}
       # Same commands locally: make check
       - name: gofmt
         run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
@@ -36,16 +40,16 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: "1.23"
+          go-version: "1.27.x"
       - uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "24"
       - run: go build -o bin/kavira ./cmd/kavira
       # Same command locally: make e2e   (every route, light/dark/390px, XSS, auth, shortcuts)
       - name: Install Playwright and Chromium
         run: |
           mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw" && npm init -y >/dev/null
-          npm i playwright@1.49.1 >/dev/null
+          npm i playwright@1.65.1 >/dev/null
           npx playwright install --with-deps chromium
           echo "KAVIRA_PW_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
       - run: node scripts/e2e.cjs --shots "$RUNNER_TEMP/shots"
@@ -80,16 +84,16 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: "1.23"
+          go-version: "1.27.x"
       - uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "24"
       # Same commands locally: make site-check   (builds the real binary, records the API, assembles _site/)
       - run: ./scripts/build-site.sh
       - name: Install Playwright and Chromium
         run: |
           mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw" && npm init -y >/dev/null
-          npm i playwright@1.49.1 >/dev/null
+          npm i playwright@1.65.1 >/dev/null
           npx playwright install --with-deps chromium
           echo "KAVIRA_PW_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
       # Serves _site under /kavira/ like Pages does, then drives the landing page and the live demo.

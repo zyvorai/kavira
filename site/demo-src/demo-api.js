@@ -32,6 +32,9 @@ export async function api(path, { method = "GET", body } = {}) {
   if (p === "incidents") return load("incidents.json");
   if (p === "audit") return load("audit.json");
   if (p === "fixtures") return load("fixtures.json");
+  if (/^incidents\/[^/]+\/(confidence|minimize)/.test(p)) {
+    throw new ApiError("The static demo cannot run analyses. Run kavira serve locally to repeat or minimize an incident.", 501);
+  }
   if (p.startsWith("incidents/")) {
     try { return await load(`incident-${encodeURIComponent(decodeURIComponent(p.slice("incidents/".length)))}.json`); }
     catch (e) { throw e.status === 404 ? new ApiError("incident not found", 404) : e; }

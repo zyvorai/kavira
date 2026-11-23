@@ -1,0 +1,41 @@
+{
+  "id": "inc-cfg-noisy-001",
+  "class": "config_regression",
+  "service": "inference",
+  "symptom": "Same workload misses its latency bound after a rollout that changed six keys.",
+  "evidence": {
+    "deploy_change": "config rollout touching batch_size, timeout_ms, memory_limit_mib and three unrelated keys",
+    "notes": [
+      "Only some of the changed keys matter. `kavira minimize` finds which ones the runner needs."
+    ]
+  },
+  "workload": {
+    "name": "inference-config",
+    "requests": 1,
+    "bytes_per_request": 262144,
+    "expected_max_p99_ms": 40
+  },
+  "configs": {
+    "previous": {
+      "batch_size": "2",
+      "timeout_ms": "200",
+      "memory_limit_mib": "64",
+      "log_level": "info",
+      "region": "eu-1",
+      "owner": "platform"
+    },
+    "current": {
+      "batch_size": "16",
+      "timeout_ms": "10",
+      "memory_limit_mib": "8",
+      "log_level": "debug",
+      "region": "eu-2",
+      "owner": "ml"
+    }
+  },
+  "timeline": [
+    { "at": "T-30m", "event": "Config rollout started" },
+    { "at": "T-12m", "event": "p99 alert fired" },
+    { "at": "T-0", "event": "Rollout paused by on-call" }
+  ]
+}

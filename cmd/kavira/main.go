@@ -18,6 +18,9 @@ import (
 	"github.com/zyvorai/kavira/internal/api"
 	"github.com/zyvorai/kavira/internal/bundle"
 	"github.com/zyvorai/kavira/internal/compiler"
+	"github.com/zyvorai/kavira/internal/confidence"
+	"github.com/zyvorai/kavira/internal/minimize"
+	"github.com/zyvorai/kavira/internal/postmortem"
 )
 
 // version is stamped at build time: -ldflags "-X main.version=1.2.3".
@@ -35,6 +38,14 @@ func main() {
 		os.Exit(runTest(os.Args[2:]))
 	case "summarize":
 		os.Exit(runSummarize(os.Args[2:]))
+	case "repeat":
+		os.Exit(runRepeat(os.Args[2:]))
+	case "minimize":
+		os.Exit(runMinimize(os.Args[2:]))
+	case "postmortem":
+		os.Exit(runPostmortem(os.Args[2:]))
+	case "export":
+		os.Exit(runExport(os.Args[2:]))
 	case "serve":
 		os.Exit(runServe(os.Args[2:]))
 	case "healthcheck":
@@ -56,6 +67,10 @@ func usage() {
   kavira test -f repairs/inc-oom-001/regression_test.json
   kavira test -f repairs/inc-oom-001/regression_test.json --format junit
   kavira summarize -f repairs/inc-oom-001/verdict.json
+  kavira repeat -f examples/oom.json -n 20
+  kavira minimize -f examples/config-regression.json -o minimal.json
+  kavira postmortem -f examples/oom.json -o postmortem.md
+  kavira export -f examples/oom.json -o repairs
   kavira serve -addr :8080
   kavira serve -addr :8443 -tls-self-signed ~/.kavira/tls -tls-host 203.0.113.7
   kavira healthcheck -url http://127.0.0.1:8080/api/v1/health
@@ -347,5 +362,123 @@ func runHealthcheck(args []string) int {
 		fmt.Fprintln(os.Stderr, "unhealthy:", res.Status)
 		return 1
 	}
+	return 0
+}
+
+// runRepeat reports a reproduction rate with a Wilson interval instead of one yes/no.
+func runRepeat(args []string) int {
+	fs := flag.NewFlagSet("repeat", flag.ExitOnError)
+	file := fs.String("f", "", "evidence bundle")
+	n := fs.Int("n", confidence.DefaultRuns, fmt.Sprintf("runs (1..%d)", confidence.MaxRuns))
+	budget := fs.Duration("budget", 2*time.Minute, "stop early after this long")
+	_ = fs.Parse(args)
+	if *file == "" {
+		fmt.Fprintln(os.Stderr, "repeat: -f is required")
+		return 2
+	}
+	b, err := bundle.Load(*file)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, *file+":", err)
+		return 1
+	}
+	rep := confidence.Run(b, *n, *budget)
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	_ = enc.Encode(rep)
+	fmt.Fprintln(os.Stderr, rep.Summary)
+	if rep.Reproduction == "flaky" || rep.Reproduction == "inconclusive" {
+		return 1
+	}
+	return 0
+}
+
+// runMinimize shrinks a bundle to the smallest input that still fails when executed.
+func runMinimize(args []string) int {
+	fs := flag.NewFlagSet("minimize", flag.ExitOnError)
+	file := fs.String("f", "", "evidence bundle")
+	out := fs.String("o", "", "write the minimal bundle here (compile it again for a verdict)")
+	runs := fs.Int("max-runs", minimize.DefaultMaxRuns, "oracle run budget")
+	budget := fs.Duration("budget", minimize.DefaultBudget, "wall-clock budget")
+	_ = fs.Parse(args)
+	if *file == "" {
+		fmt.Fprintln(os.Stderr, "minimize: -f is required")
+		return 2
+	}
+	b, err := bundle.Load(*file)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, *file+":", err)
+		return 1
+	}
+	rep, min, err := minimize.Minimize(b, minimize.Options{MaxRuns: *runs, Budget: *budget})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "minimize:", err)
+		return 1
+	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	_ = enc.Encode(rep)
+	fmt.Fprintln(os.Stderr, rep.Summary)
+	if *out != "" {
+		raw, _ := json.MarshalIndent(min, "", "  ")
+		if err := os.WriteFile(*out, append(raw, '\n'), 0o644); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		fmt.Fprintln(os.Stderr, "wrote", *out)
+	}
+	return 0
+}
+
+// runPostmortem compiles a bundle and writes a blameless postmortem draft. Any verdict is accepted:
+// a draft for a not_reproduced incident says so and states no root cause.
+func runPostmortem(args []string) int {
+	fs := flag.NewFlagSet("postmortem", flag.ExitOnError)
+	file := fs.String("f", "", "evidence bundle")
+	out := fs.String("o", "", "write Markdown here (default: stdout)")
+	_ = fs.Parse(args)
+	if *file == "" {
+		fmt.Fprintln(os.Stderr, "postmortem: -f is required")
+		return 2
+	}
+	b, err := bundle.Load(*file)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, *file+":", err)
+		return 1
+	}
+	md := postmortem.Render(b, compiler.Compile(b))
+	if *out == "" {
+		fmt.Print(md)
+		return 0
+	}
+	if err := os.WriteFile(*out, []byte(md), 0o644); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	fmt.Fprintln(os.Stderr, "wrote", *out)
+	return 0
+}
+
+// runExport writes repairs/<id>/regression/{regress.sh,...}: fails on the captured condition, passes on the repair.
+func runExport(args []string) int {
+	fs := flag.NewFlagSet("export", flag.ExitOnError)
+	file := fs.String("f", "", "evidence bundle")
+	out := fs.String("o", "repairs", "output directory")
+	_ = fs.Parse(args)
+	if *file == "" {
+		fmt.Fprintln(os.Stderr, "export: -f is required")
+		return 2
+	}
+	b, err := bundle.Load(*file)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, *file+":", err)
+		return 1
+	}
+	rep := compiler.Compile(b)
+	dest, err := compiler.WriteRegression(*out, b, rep)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "export:", err)
+		return 1
+	}
+	fmt.Fprintln(os.Stderr, "wrote", dest, "(run regress.sh with KAVIRA=/path/to/kavira)")
 	return 0
 }

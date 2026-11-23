@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Confidence.** `kavira repeat -f B -n 20` and `GET /api/v1/incidents/{id}/confidence`: reproduction and repair rates with 95% Wilson intervals; `not_reproduced` only after 20 clean runs, otherwise `inconclusive`; `flaky` when runs disagree. No seed on purpose: the runners have no random source.
+- **Minimizer.** `kavira minimize` and `.../minimize`: delta debugging (ddmin) over config-diff keys, network factors or workload requests, with the runner as oracle; reports 1-minimality and re-verifies the result. Never claims a global minimum or a production cause.
+- **Postmortem draft.** `kavira postmortem` and `.../postmortem.md`: blameless Markdown that separates demonstrated, captured and hypothesis, states no root cause or repair unless execution showed it, and escapes all bundle text. Bundles may carry an optional `timeline`.
+- **Regression export.** `kavira export` and `.../regression.zip`: a dependency-free `regress.sh` that fails on the captured condition and passes on the repair; `repair_held` only.
+- **Console.** An **Analyze** tab per incident for the four above.
+- **Hostile input.** Bundles are now bounded before anything runs (size, text, ids, timeline, config keys, requests, total allocation, network attempts/delay/timeout). Previously a bundle could ask the runner for terabytes or hours. Repaired network conditions read by `kavira test` are re-validated; a repair that would leave the limits is `repair_failed`, not run. `kavira compile` no longer reads a whole oversize file.
+- **Docs.** `docs/RESEARCH.md` (prior art, ranked ideas, claims marked fetched or unverified) and `docs/ANALYSIS.md`; `examples/analysis/`.
+- **Toolchain upgrade.** `go.mod` now says `go 1.26` (was 1.23); CI runs the test job on a Go 1.26.x / 1.27.x matrix and the other jobs on 1.27.x; CI Node 22 -> 24; Playwright pin 1.49.1 -> 1.65.1 (the e2e suite passes on it); runtime image `distroless/static-debian13:nonroot` (was debian12; the build image `golang:1.27-alpine` was already current); `sigstore/cosign-installer` v3 -> v4.1.3; README Go badge 1.26+. Every other action was already on its latest major. Held back: the cosign pin is an exact tag because upstream publishes no floating `v4` tag; Actions stay tag-pinned (not SHA-pinned) to match the existing style; `deploy/` pins the KAVIRA image itself, which is version-synced, so there was nothing to bump.
 - **Disk pressure class.** Fourth supported incident: bounded write workload under a captured volume quota, with raise-quota and rotate/flush repair arms (`examples/disk-pressure.json`).
 - **CLI.** `kavira compile -d DIR` batch-compiles every `*.json` bundle; `kavira test -d DIR` retests every repair package; `--format junit|github|json` for CI; `kavira summarize -f verdict.json` prints a human one-pager.
 - **API.** `GET /api/v1/incidents/{id}/package.zip` downloads the repair package when execution confirmed a repair.

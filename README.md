@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/zyvorai/kavira/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/kavira/actions/workflows/ci.yml)
 [![License: Zyvor Production 1.0](https://img.shields.io/badge/License-Zyvor_Production_1.0-1d1d1f.svg)](LICENSE)
-[![Go](https://img.shields.io/badge/go-1.23%2B-2997ff)](go.mod)
+[![Go](https://img.shields.io/badge/go-1.26%2B-2997ff)](go.mod)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-63e6be)](go.mod)
 [![Docs](https://img.shields.io/badge/docs-site-000000)](https://zyvorai.github.io/kavira/)
 
@@ -139,6 +139,10 @@ All `/api/v1` routes except `health` and `session` need the `kavira_session` coo
 | `POST /api/v1/compile` | `{"fixture": "oom"}` or a raw evidence bundle (≤ 1 MiB) |
 | `GET /api/v1/fixtures` | Embedded examples with class and symptom |
 | `GET /api/v1/audit` | Hash-chained log and `chain_ok` |
+
+## Beyond one verdict
+
+`kavira repeat` (reproduction rate with a Wilson interval, `not_reproduced` only after 20 clean runs), `kavira minimize` (delta debugging to the smallest failing input), `kavira postmortem` (a blameless draft that separates demonstrated, captured and hypothesis) and `kavira export` (a before/after `regress.sh`). Also in the console under an incident's **Analyze** tab. See [docs/ANALYSIS.md](docs/ANALYSIS.md); the research behind the choices is in [docs/RESEARCH.md](docs/RESEARCH.md).
 
 ## Where it sits
 

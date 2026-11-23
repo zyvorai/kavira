@@ -145,6 +145,24 @@ const check = (ok, msg) => { console.log(`${ok ? "ok  " : "FAIL"} ${msg}`); if (
   const [dl] = await Promise.all([page.waitForEvent("download"), page.click('[data-download="test"]')]);
   check(dl.suggestedFilename() === "regression_test.json", "repairs: downloads regression_test.json");
 
+  // analyze: confidence, minimize, postmortem and regression downloads
+  await page.goto(base + "/#/incidents/inc-oom-001/analyze");
+  await page.waitForSelector("[data-analyze=confidence]");
+  check((await page.getAttribute('.tabs a[href$="/analyze"]', "aria-current")) === "page", "analyze: tab is current");
+  await noScroll(page, "analyze");
+  await page.selectOption("#conf-n", "10");
+  await page.click("[data-analyze=confidence]");
+  await page.waitForSelector("#conf-out .banner");
+  const conf = await page.textContent("#conf-out");
+  check(conf.includes("10/10") && conf.includes("Wilson"), "analyze: confidence shows a rate and a Wilson interval");
+  await page.click("[data-analyze=minimize]");
+  await page.waitForSelector("#min-out .banner");
+  check((await page.textContent("#min-out")).includes("1-minimal"), "analyze: minimize reports 1-minimality honestly");
+  const [pm] = await Promise.all([page.waitForEvent("download"), page.click('[data-file="postmortem.md"]')]);
+  check(pm.suggestedFilename().endsWith("postmortem.md"), "analyze: downloads the postmortem draft");
+  const [rz] = await Promise.all([page.waitForEvent("download"), page.click('[data-file="regression.zip"]')]);
+  check(rz.suggestedFilename().endsWith("regression.zip"), "analyze: downloads the regression check");
+
   // shortcuts
   await page.goto(base + "/#/overview");
   await page.waitForSelector("#page-title");
