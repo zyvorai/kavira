@@ -29,8 +29,8 @@ Ranking criteria: (1) strengthens "execution is the verdict", (2) cannot be made
 2. **Delta-debugging minimizer (built).** Shrink the config diff, network factors, or workload requests to the smallest input that still fails, using the runner as the oracle. Rationale: turns "the config regressed" into "these two keys are needed". Honest limit: 1-minimal, not global minimum, and sufficient-in-reconstruction is not cause-in-production. Source: Zeller and Hildebrandt (background **[unverified]**, paper URL above).
 3. **Postmortem draft export (built).** Blameless Markdown following the SRE sections, with `Demonstrated`, `Captured` and `Hypothesis` kept apart and a "Not established" section. Source: sre.google postmortem culture (fetched). Timeline comes from an optional bundle field, never invented.
 4. **Before/after regression export (built).** A POSIX `regress.sh` that fails on the captured condition and passes on the repair, using only the kavira binary. Rationale: a regression test that cannot fail before the fix proves nothing; this checks both sides. Related: LitmusChaos probes as steady-state assertions (fetched).
-5. **More one-factor network arms** (jitter, bandwidth, reset_peer, slow_close, from Toxiproxy's toxic list, fetched). Low effort, extends an existing class. Not built.
-6. **New incident classes** (DNS failure, certificate expiry, connection-pool exhaustion, retry storm). Each needs a runner template, hypotheses, repair arms, fixtures equal to `examples/`, and e2e coverage. Real value, but each is a feature of its own size; the four built features above apply to every class automatically. Not built.
+5. **More one-factor network arms (built)** (jitter, bandwidth, reset_peer, slow_close, from Toxiproxy's toxic list, fetched). Implemented with the standard library on loopback; slicer, limit_data and packet-level loss were not.
+6. **New incident classes (built)**: DNS failure, certificate expiry, connection-pool exhaustion, retry storm, see `CLASSES.md`. Goroutine and file-descriptor exhaustion were rejected: reproducing them for real needs a process-wide rlimit or runaway goroutines, which would harm `kavira serve`, and a simulation is not an execution.
 7. **Trace-to-bundle ingestion** (Tracetest, OpenTelemetry). Removes manual capture, but needs a trace schema, and traces omit the very conditions KAVIRA reconstructs. Not built.
 8. **Record-replay (rr/Pernosco style).** Rejected: it contradicts the "never claim exact replay" boundary and needs process-level instrumentation.
 9. **Jepsen-style history checking.** Rejected: needs concurrent histories and a consistency model; out of scope for four resource and config classes.
@@ -39,4 +39,5 @@ Ranking criteria: (1) strengthens "execution is the verdict", (2) cannot be made
 ## Chosen and rejected, in one line each
 
 - Built: confidence (`kavira repeat`), minimizer (`kavira minimize`), postmortem draft (`kavira postmortem`), regression export (`kavira export`).
-- Not built: new incident classes (size), network arms (follow-up), trace ingestion (schema), record-replay (boundary), Jepsen checking (scope), live injection (boundary).
+- Built later: four new incident classes and four Toxiproxy-style network arms (`CLASSES.md`).
+- Not built: trace ingestion (schema), goroutine and fd exhaustion (process-wide side effects), record-replay (boundary), Jepsen checking (scope), live injection (boundary).

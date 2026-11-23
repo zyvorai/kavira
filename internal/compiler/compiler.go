@@ -90,6 +90,14 @@ func Compile(b bundle.Bundle) Report {
 		compileConfig(&rep, b)
 	case bundle.ClassDisk:
 		compileDisk(&rep, b)
+	case bundle.ClassDNS:
+		compileDNS(&rep, b)
+	case bundle.ClassCert:
+		compileCert(&rep, b)
+	case bundle.ClassPool:
+		compilePool(&rep, b)
+	case bundle.ClassRetry:
+		compileRetry(&rep, b)
 	default:
 		rep.Verdict = "unsupported"
 		rep.Summary = "Class is not in the supported set."
@@ -242,16 +250,28 @@ func compileNetwork(rep *Report, b bundle.Bundle) {
 
 	repaired := n
 	changed := ""
-	if n.PolicyDeny {
+	pathMs := int64(n.DelayMs) + int64(n.JitterMs) + bundle.TransferMs(n)
+	if n.SlowCloseMs > 0 {
+		pathMs += int64(n.SlowCloseMs)
+	}
+	size := n.ResponseBytes
+	if size < 2 {
+		size = 2
+	}
+	switch {
+	case n.PolicyDeny:
 		repaired.PolicyDeny = false
 		changed = "policy_deny true -> false"
-	} else if n.DelayMs >= n.TimeoutMs {
-		repaired.TimeoutMs = n.DelayMs*3 + 50
+	case n.ResetAfterBytes > 0 && n.ResetAfterBytes < size:
+		repaired.ResetAfterBytes = 0
+		changed = fmt.Sprintf("reset_after_bytes %d -> 0", n.ResetAfterBytes)
+	case pathMs >= int64(n.TimeoutMs):
+		repaired.TimeoutMs = int(min(pathMs*3+50, int64(bundle.MaxNetMs)+1))
 		changed = fmt.Sprintf("timeout_ms %d -> %d", n.TimeoutMs, repaired.TimeoutMs)
-	} else if n.LossPercent > 0 {
+	case n.LossPercent > 0:
 		repaired.LossPercent = 0
 		changed = fmt.Sprintf("loss_percent %d -> 0", n.LossPercent)
-	} else {
+	default:
 		repaired.TimeoutMs = n.TimeoutMs * 4
 		changed = fmt.Sprintf("timeout_ms %d -> %d", n.TimeoutMs, repaired.TimeoutMs)
 	}
@@ -270,6 +290,9 @@ func compileNetwork(rep *Report, b bundle.Bundle) {
 		patch := map[string]any{
 			"delay_ms": repaired.DelayMs, "loss_percent": repaired.LossPercent,
 			"timeout_ms": repaired.TimeoutMs, "policy_deny": repaired.PolicyDeny,
+			"jitter_ms": repaired.JitterMs, "bandwidth_bps": repaired.BandwidthBps,
+			"reset_after_bytes": repaired.ResetAfterBytes, "slow_close_ms": repaired.SlowCloseMs,
+			"response_bytes": repaired.ResponseBytes,
 		}
 		rep.Repair = &RepairPackage{
 			Title: "Network timeout repair",
@@ -357,6 +380,14 @@ func fileStem(class string) string {
 		return "config-regression"
 	case bundle.ClassDisk:
 		return "disk-pressure"
+	case bundle.ClassDNS:
+		return "dns-failure"
+	case bundle.ClassCert:
+		return "certificate-expiry"
+	case bundle.ClassPool:
+		return "connection-pool"
+	case bundle.ClassRetry:
+		return "retry-storm"
 	default:
 		return class
 	}
@@ -434,6 +465,11 @@ func TestRepair(b bundle.Bundle, test RegressionTest) (runner.Result, error) {
 		if v, ok := test.Repair["policy_deny"].(bool); ok {
 			n.PolicyDeny = v
 		}
+		setInt(test.Repair, "jitter_ms", &n.JitterMs)
+		setInt(test.Repair, "bandwidth_bps", &n.BandwidthBps)
+		setInt(test.Repair, "reset_after_bytes", &n.ResetAfterBytes)
+		setInt(test.Repair, "slow_close_ms", &n.SlowCloseMs)
+		setInt(test.Repair, "response_bytes", &n.ResponseBytes)
 		if err := bundle.ValidateNetwork(n); err != nil {
 			return runner.Result{}, err
 		}
@@ -445,7 +481,14 @@ func TestRepair(b bundle.Bundle, test RegressionTest) (runner.Result, error) {
 		}
 		result = runner.RunConfig(cfg)
 	default:
-		return runner.Result{}, fmt.Errorf("unsupported class %s", b.Class)
+		res, ok, err := testClassRepair(b, test)
+		if !ok {
+			return runner.Result{}, fmt.Errorf("unsupported class %s", b.Class)
+		}
+		if err != nil {
+			return runner.Result{}, err
+		}
+		result = res
 	}
 	if result.Failures > test.Expect.MaxFailures {
 		return result, fmt.Errorf("failures %d > max %d", result.Failures, test.Expect.MaxFailures)

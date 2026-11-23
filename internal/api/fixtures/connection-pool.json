@@ -1,0 +1,23 @@
+{
+  "id": "inc-pool-001",
+  "class": "connection_pool_exhaustion",
+  "service": "orders-api",
+  "symptom": "Requests fail with pool exhausted errors during the evening burst.",
+  "evidence": {
+    "p99_ms": 1900,
+    "deploy_change": "Replica count doubled, pool size per replica unchanged",
+    "notes": [
+      "Pool size, acquire timeout and per-request time are captured settings.",
+      "The server is a loopback listener that sleeps service_ms per request; it is not the production database."
+    ]
+  },
+  "pool": {
+    "pool_size": 4,
+    "acquire_timeout_ms": 40,
+    "clients": 12,
+    "requests_per_client": 3,
+    "service_ms": 30,
+    "leak_every": 0,
+    "expected_max_p99_ms": 500
+  }
+}

@@ -4,7 +4,7 @@ Guidance for AI coding agents and humans working in this repository.
 
 ## What KAVIRA is
 
-A Go CLI and embedded web console that compiles captured incident evidence (container OOM, network timeout, configuration regression, disk pressure) into an isolated reproducer, one-factor experiments, and a repair package. Single static binary, zero third-party dependencies.
+A Go CLI and embedded web console that compiles captured incident evidence (container OOM, network timeout, configuration regression, disk pressure, DNS failure, certificate expiry, connection-pool exhaustion, retry storm) into an isolated reproducer, one-factor experiments, and a repair package. Single static binary, zero third-party dependencies.
 
 ## Hard boundaries
 
@@ -21,9 +21,10 @@ A Go CLI and embedded web console that compiles captured incident evidence (cont
 | Path | What |
 | --- | --- |
 | `cmd/kavira` | CLI: `compile`, `test`, `summarize`, `repeat`, `minimize`, `postmortem`, `export`, `serve`, `version` |
-| `internal/{bundle,hypotheses,runner,compiler}` | The compile pipeline |
+| `internal/{bundle,hypotheses,runner,compiler}` | The compile pipeline. A new class needs a validator in `bundle`, a runner, a `compile*` template and `testClassRepair` entry in `compiler`, a hypothesis, `minimize` support, an example plus an equal fixture, and a row in `ui.js` `CLASSES` |
 | `internal/{confidence,minimize,postmortem}` | Read-only analyses on top of it (see `docs/ANALYSIS.md`). They never create a repair package or change a verdict |
 | `internal/api` | HTTP server, auth, embedded console (`static/`) and fixtures (`fixtures/`, must equal `examples/`) |
+| `docs/CLASSES.md` | What each incident class models and leaves out, bounds, determinism |
 | `docs/design/UX-CONTRACT.md` | Console design rules |
 | `docs/social`, `docs/ux` | Social images, README cards, screenshots, demo GIF (generated) |
 | `site/` | Static landing page, published by `pages.yml` |

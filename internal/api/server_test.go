@@ -53,7 +53,7 @@ func TestSessionAndIncidents(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
 		t.Fatal(err)
 	}
-	if len(body.Incidents) != 4 {
+	if len(body.Incidents) != 8 {
 		t.Fatalf("seeded %d", len(body.Incidents))
 	}
 	for _, inc := range body.Incidents {
@@ -236,7 +236,7 @@ func TestIncidentsSortedAndAuditChain(t *testing.T) {
 		Audit []Audit `json:"audit"`
 	}
 	json.NewDecoder(do(t, "GET", srv.URL+"/api/v1/audit", "", "", ck).Body).Decode(&a)
-	if len(a.Audit) != 4 {
+	if len(a.Audit) != 8 {
 		t.Fatalf("audit %d", len(a.Audit))
 	}
 	for i, e := range a.Audit {
@@ -255,6 +255,11 @@ func TestFixturesMatchExamples(t *testing.T) {
 	entries, err := os.ReadDir("fixtures")
 	if err != nil || len(entries) == 0 {
 		t.Fatal("no fixtures", err)
+	}
+	// Every example must also be a fixture, or the console silently lacks a class.
+	examples, _ := filepath.Glob(filepath.Join("..", "..", "examples", "*.json"))
+	if len(examples) != len(entries) {
+		t.Errorf("%d examples but %d fixtures", len(examples), len(entries))
 	}
 	for _, e := range entries {
 		want, err := os.ReadFile(filepath.Join("..", "..", "examples", e.Name()))
@@ -286,7 +291,7 @@ func TestFixturesListAndChainFlag(t *testing.T) {
 	if err := json.NewDecoder(do(t, "GET", srv.URL+"/api/v1/fixtures", "", "", ck).Body).Decode(&f); err != nil {
 		t.Fatal(err)
 	}
-	if len(f.Fixtures) != 4 || f.Fixtures[0].Name == "" || f.Fixtures[0].Class == "" || f.Fixtures[0].Symptom == "" {
+	if len(f.Fixtures) != 8 || f.Fixtures[0].Name == "" || f.Fixtures[0].Class == "" || f.Fixtures[0].Symptom == "" {
 		t.Fatalf("fixtures %+v", f.Fixtures)
 	}
 	var a struct {
