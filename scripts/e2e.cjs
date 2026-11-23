@@ -271,7 +271,7 @@ const check = (ok, msg) => { console.log(`${ok ? "ok  " : "FAIL"} ${msg}`); if (
   check((await page.textContent("main")).includes("<script>window.__xss=1</script>"), "xss: hostile text shown literally");
   await page.goto(base + "/#/incidents");
   await page.waitForSelector("#inc-table tbody tr");
-  check(await page.locator("#inc-table tbody tr").count() === 5, "bundle: custom incident listed");
+  check(await page.locator("#inc-table tbody tr", { hasText: "inc-xss-001" }).count() === 1, "bundle: custom incident listed");
   await page.goto(base + "/#/audit");
   await page.waitForSelector("table");
   check((await page.textContent(".banner")).includes("Chain verified"), "audit: chain verified banner");
