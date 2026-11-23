@@ -30,6 +30,9 @@ import (
 
 	"github.com/zyvorai/kavira/internal/bundle"
 	"github.com/zyvorai/kavira/internal/compiler"
+	"github.com/zyvorai/kavira/internal/confidence"
+	"github.com/zyvorai/kavira/internal/minimize"
+	"github.com/zyvorai/kavira/internal/postmortem"
 )
 
 //go:embed fixtures/*.json
@@ -46,6 +49,8 @@ type Server struct {
 	demoGate     bool
 	defaultKey   bool
 	secureCookie bool
+	// heavy admits one repeat/minimize run at a time; they really execute workloads.
+	heavy chan struct{}
 }
 
 const (
@@ -82,6 +87,7 @@ func New() *Server {
 		demoGate:     password == defaultPassword,
 		defaultKey:   usingDefaultKey,
 		secureCookie: os.Getenv("KAVIRA_COOKIE_SECURE") == "1",
+		heavy:        make(chan struct{}, 1),
 	}
 	s.seed()
 	return s
@@ -354,9 +360,17 @@ func (s *Server) incidents(w http.ResponseWriter, r *http.Request) {
 func (s *Server) incident(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/v1/incidents/")
 	wantZip := false
+	action := ""
 	if strings.HasSuffix(id, "/package.zip") {
 		wantZip = true
 		id = strings.TrimSuffix(id, "/package.zip")
+	}
+	for _, a := range []string{"confidence", "minimize", "postmortem.md", "regression.zip"} {
+		if strings.HasSuffix(id, "/"+a) {
+			action = a
+			id = strings.TrimSuffix(id, "/"+a)
+			break
+		}
 	}
 	id = path.Base(id)
 	s.mu.Lock()
@@ -365,6 +379,10 @@ func (s *Server) incident(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 	if !ok {
 		writeError(w, http.StatusNotFound, "incident not found")
+		return
+	}
+	if action != "" {
+		s.action(w, r, action, b, rep)
 		return
 	}
 	if wantZip {
@@ -484,4 +502,69 @@ func chainOK(entries []Audit) bool {
 		prev = e.Hash
 	}
 	return true
+}
+
+// action serves the read-only analyses of one incident. None of them changes server state or the audit
+// log; none of them can create a repair package.
+func (s *Server) action(w http.ResponseWriter, r *http.Request, action string, b bundle.Bundle, rep compiler.Report) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	switch action {
+	case "postmortem.md":
+		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s-postmortem.md"`, safeName(rep.ID)))
+		_, _ = io.WriteString(w, postmortem.Render(b, rep))
+	case "regression.zip":
+		raw, err := compiler.RegressionZIP(b, rep)
+		if err != nil {
+			writeError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s-regression.zip"`, safeName(rep.ID)))
+		_, _ = w.Write(raw)
+	case "confidence", "minimize":
+		select {
+		case s.heavy <- struct{}{}:
+			defer func() { <-s.heavy }()
+		default:
+			writeError(w, http.StatusTooManyRequests, "another analysis is running; try again shortly")
+			return
+		}
+		if action == "confidence" {
+			n := confidence.DefaultRuns
+			if v := r.URL.Query().Get("n"); v != "" {
+				k, err := strconv.Atoi(v)
+				if err != nil || k < 1 || k > confidence.MaxRuns {
+					writeError(w, http.StatusBadRequest, fmt.Sprintf("n must be 1..%d", confidence.MaxRuns))
+					return
+				}
+				n = k
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"confidence": confidence.Run(b, n, 15*time.Second)})
+			return
+		}
+		min, mb, err := minimize.Minimize(b, minimize.Options{Budget: 15 * time.Second})
+		if err != nil {
+			writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": err.Error(), "minimize": min})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"minimize": min, "bundle": mb})
+	}
+}
+
+// safeName keeps a download filename to harmless characters.
+func safeName(s string) string {
+	out := strings.Map(func(r rune) rune {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '.' {
+			return r
+		}
+		return '_'
+	}, s)
+	if out == "" {
+		return "incident"
+	}
+	return out
 }

@@ -20,8 +20,9 @@ A Go CLI and embedded web console that compiles captured incident evidence (cont
 
 | Path | What |
 | --- | --- |
-| `cmd/kavira` | CLI: `compile`, `test`, `summarize`, `serve`, `version` |
+| `cmd/kavira` | CLI: `compile`, `test`, `summarize`, `repeat`, `minimize`, `postmortem`, `export`, `serve`, `version` |
 | `internal/{bundle,hypotheses,runner,compiler}` | The compile pipeline |
+| `internal/{confidence,minimize,postmortem}` | Read-only analyses on top of it (see `docs/ANALYSIS.md`). They never create a repair package or change a verdict |
 | `internal/api` | HTTP server, auth, embedded console (`static/`) and fixtures (`fixtures/`, must equal `examples/`) |
 | `docs/design/UX-CONTRACT.md` | Console design rules |
 | `docs/social`, `docs/ux` | Social images, README cards, screenshots, demo GIF (generated) |

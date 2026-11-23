@@ -81,7 +81,7 @@ export function incidents(ctx) {
     <div class="card" id="inc-table">${incidentRows(ctx)}</div>`;
 }
 
-const TABS = [["evidence", "Evidence"], ["experiments", "Experiments"], ["repairs", "Repairs"]];
+const TABS = [["evidence", "Evidence"], ["experiments", "Experiments"], ["repairs", "Repairs"], ["analyze", "Analyze"]];
 
 function incidentHead(i, tab) {
   return h`<nav class="crumbs" aria-label="Breadcrumb"><a href="${href.incidents}">Incidents</a> <span aria-hidden="true">/</span> <span>${i.id}</span></nav>
@@ -153,6 +153,57 @@ function repairs(i) {
     <p class="muted small">Run it: <code>kavira test -f regression_test.json</code></p>`;
 }
 
+const pctText = (x) => `${Math.round(x * 100)}%`;
+
+export function confidenceView(c) {
+  const r = c.reproduced, hd = c.repair_held;
+  return h`<p class="banner ${c.reproduction === "reproduced" ? "" : "warn"}" role="status"><strong>${sentence(c.reproduction)}.</strong> ${c.summary}</p>
+    ${kv([
+      ["Runs completed", `${c.completed_runs} of ${c.requested_runs}${c.truncated ? " (stopped at the time budget)" : ""}`],
+      ["Symptom reproduced", `${r.successes}/${r.trials} · ${pctText(r.rate)} · 95% Wilson ${pctText(r.wilson_low)} to ${pctText(r.wilson_high)}`],
+      ["Repair held", hd.trials ? `${hd.successes}/${hd.trials} · 95% Wilson ${pctText(hd.wilson_low)} to ${pctText(hd.wilson_high)}` : "no reproduced run to repair"],
+      ["Verdicts seen", Object.entries(c.verdicts || {}).map(([k, v]) => `${k} ×${v}`).join(", ")],
+    ])}
+    <p class="muted small">${c.note}</p>`;
+}
+
+export function minimizeView(m) {
+  return h`<p class="banner ${m.verified ? "" : "warn"}" role="status">${m.summary}</p>
+    ${kv([
+      ["Kind", sentence(m.kind)],
+      ["Minimal", (m.minimal || []).join(", ")],
+      ["Removed", (m.removed || []).length ? m.removed.join(", ") : "nothing"],
+      ["Oracle runs", String(m.runs)],
+      ["1-minimal", m.one_minimal ? "Yes, within the budget" : "Not proven"],
+      ["Re-executed and failed again", m.verified ? "Yes" : "No"],
+    ])}
+    <p class="muted small">${m.note}</p>`;
+}
+
+function analyze(i) {
+  const held = i.verdict === "repair_held";
+  return h`<p class="banner info">These analyses run the reconstruction again. They never create a repair package, never change the verdict above, and are not recorded in the audit log.</p>
+    <div class="grid">
+      <div class="card"><p class="kicker">Confidence</p><h3>How stable is the reproduction?</h3>
+        <p class="small">Runs the whole pipeline many times and reports a rate with a Wilson interval, instead of one yes or no. <em>Not reproduced</em> needs at least 20 clean runs.</p>
+        <div class="row"><label class="visually-hidden" for="conf-n">Number of runs</label>
+          <select id="conf-n" class="input-field"><option value="10">10 runs</option><option value="20" selected>20 runs</option><option value="50">50 runs</option></select>
+          <button type="button" data-analyze="confidence">Run</button></div>
+        <div id="conf-out" aria-live="polite"></div></div>
+      <div class="card"><p class="kicker">Minimize</p><h3>What is the smallest input that still fails?</h3>
+        <p class="small">Delta debugging (ddmin) over the config diff, network factors, or workload requests. The runner is the oracle.</p>
+        <div class="row"><button type="button" data-analyze="minimize">Minimize</button></div>
+        <div id="min-out" aria-live="polite"></div></div>
+      <div class="card"><p class="kicker">Postmortem draft</p><h3>States only what execution showed</h3>
+        <p class="small">A blameless Markdown draft. Hypotheses are labelled as hypotheses; captured evidence is labelled as captured.</p>
+        <div class="row"><button type="button" data-file="postmortem.md" data-name="postmortem.md">Download draft</button></div></div>
+      <div class="card"><p class="kicker">Regression check</p><h3>Fails before, passes after</h3>
+        ${held ? h`<p class="small">A dependency-free <code>regress.sh</code> plus the tests it runs. Needs only a shell and the kavira binary.</p>
+          <div class="row"><button type="button" data-file="regression.zip" data-name="regression.zip">Download check</button></div>`
+          : h`<p class="small">Not available: execution did not confirm a repair (${verdictLabel(i.verdict)}), so there is nothing to check.</p>`}</div>
+    </div>`;
+}
+
 export async function incident(ctx, route) {
   let data;
   try {
@@ -163,7 +214,7 @@ export async function incident(ctx, route) {
   }
   const i = data.incident;
   ctx.current = i;
-  const body = { evidence, experiments, repairs }[route.tab];
+  const body = { evidence, experiments, repairs, analyze }[route.tab];
   if (!body) return { html: notFound("Unknown section.") };
   return { html: h`${incidentHead(i, route.tab)}${body(i, data.bundle)}`, incident: i };
 }

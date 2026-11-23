@@ -3,6 +3,8 @@
 | File | What |
 | --- | --- |
 | `design/UX-CONTRACT.md` | Console design rules, tokens, laws, checklist |
+| `ANALYSIS.md` | repeat, minimize, postmortem, export |
+| `RESEARCH.md` | Prior art, ranked ideas, what was built and rejected |
 | `proposals/0001-kavira-incident-compiler.md` | Original proposal |
 | `social/` | Hero (`kavira-hero-dark`), share card, and their HTML sources |
 | `ux/` | Console screenshots, README cards, demo GIF |

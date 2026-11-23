@@ -1,0 +1,29 @@
+{
+  "id": "inc-oom-burst-001",
+  "class": "container_oom",
+  "service": "inference",
+  "symptom": "A 24-request burst restarts the container; the limit only holds three buffers.",
+  "evidence": {
+    "memory_limit_bytes": 3145728,
+    "observed_peak_bytes": 25165824,
+    "restart_count": 5,
+    "p99_ms": 3100,
+    "deploy_change": "batch window widened from 4 to 24 requests",
+    "notes": [
+      "Limit is the captured cgroup value, not a trace.",
+      "`kavira minimize` shrinks the burst to the smallest request count that still fails."
+    ]
+  },
+  "workload": {
+    "name": "inference-burst",
+    "requests": 24,
+    "bytes_per_request": 1048576,
+    "hold": true,
+    "expected_max_p99_ms": 2000
+  },
+  "timeline": [
+    { "at": "T-20m", "event": "Batch window widened" },
+    { "at": "T-6m", "event": "First OOM kill" },
+    { "at": "T-1m", "event": "Fifth restart" }
+  ]
+}

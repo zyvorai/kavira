@@ -156,12 +156,53 @@ function refreshTable() {
   if (box) box.innerHTML = pages.incidentRows(ctx).toString();
 }
 
+/* ---------- analyses (read-only, never change the verdict) ---------- */
+async function runAnalysis(btn, kind) {
+  const id = ctx.current?.id;
+  if (!id) return;
+  const out = $(kind === "confidence" ? "conf-out" : "min-out");
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = "Running…";
+  out.innerHTML = "";
+  try {
+    const q = kind === "confidence" ? `?n=${encodeURIComponent($("conf-n").value)}` : "";
+    const res = await api(`/api/v1/incidents/${encodeURIComponent(id)}/${kind}${q}`);
+    out.innerHTML = (kind === "confidence" ? pages.confidenceView(res.confidence) : pages.minimizeView(res.minimize)).toString();
+  } catch (ex) {
+    out.textContent = ex.message;
+    toast(ex.message, "error");
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+
+async function downloadFile(btn, file, name) {
+  const id = ctx.current?.id;
+  if (!id) return;
+  try {
+    const res = await fetch(`/api/v1/incidents/${encodeURIComponent(id)}/${file}`, { credentials: "same-origin" });
+    if (!res.ok) throw new Error(res.status === 404 ? "Not available for this incident." : "Download failed.");
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${id}-${name}`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } catch (ex) {
+    toast(ex.message === "Failed to fetch" ? "Could not reach the server." : ex.message, "error");
+  }
+}
+
 /* ---------- delegated events ---------- */
 document.addEventListener("click", async (e) => {
-  const t = e.target.closest("[data-compile],[data-open-bundle],[data-copy],[data-copy-text],[data-download],[data-sort],[data-clear-filter],[data-retry],tr[data-href]");
+  const t = e.target.closest("[data-compile],[data-analyze],[data-file],[data-open-bundle],[data-copy],[data-copy-text],[data-download],[data-sort],[data-clear-filter],[data-retry],tr[data-href]");
   if (!t) return;
   const d = t.dataset;
   if (d.compile) compile({ fixture: d.compile }).catch(() => {});
+  else if (d.analyze) runAnalysis(t, d.analyze);
+  else if (d.file) downloadFile(t, d.file, d.name);
   else if ("openBundle" in d) openBundle();
   else if (d.copy) copyText($(d.copy).textContent);
   else if (d.copyText) copyText(d.copyText);
