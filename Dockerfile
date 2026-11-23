@@ -6,7 +6,7 @@ COPY go.mod ./
 COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/kavira ./cmd/kavira
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian13:nonroot
 ARG VERSION=dev
 LABEL org.opencontainers.image.title="KAVIRA" \
       org.opencontainers.image.description="Turn an outage into a reproducible test" \
